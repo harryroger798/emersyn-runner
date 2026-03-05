@@ -188,6 +188,7 @@ public class SimpleTrackRunner : MonoBehaviour
         crosswalkMat = CreateTexturedMaterial("tex_ground_crosswalk", new Color(0.9f, 0.9f, 0.9f));
         manholeMat = CreateTexturedMaterial("tex_ground_manhole", new Color(0.35f, 0.35f, 0.35f));
 
+        // Phase 9: Expanded props array with new Modal textures
         propMats = new Material[]
         {
             CreateTexturedMaterial("tex_prop_trashcan", new Color(0.2f, 0.5f, 0.2f)),
@@ -197,7 +198,12 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_prop_newspaper", new Color(0.7f, 0.65f, 0.1f)),
             CreateTexturedMaterial("tex_prop_bollard", new Color(0.6f, 0.6f, 0.6f)),
             CreateTexturedMaterial("tex_prop_planter", new Color(0.4f, 0.55f, 0.3f)),
-            CreateTexturedMaterial("tex_prop_streetlight", new Color(0.3f, 0.3f, 0.35f))
+            CreateTexturedMaterial("tex_prop_streetlight", new Color(0.3f, 0.3f, 0.35f)),
+            CreateTexturedMaterial("tex_prop_vending_machine", new Color(0.3f, 0.4f, 0.7f)),
+            CreateTexturedMaterial("tex_prop_phone_booth", new Color(0.8f, 0.2f, 0.15f)),
+            CreateTexturedMaterial("tex_prop_fire_escape", new Color(0.4f, 0.4f, 0.4f)),
+            CreateTexturedMaterial("tex_prop_awning_striped", new Color(0.8f, 0.3f, 0.2f)),
+            CreateTexturedMaterial("tex_prop_potted_plant", new Color(0.3f, 0.55f, 0.25f))
         };
 
         // Phase 8: Use HD obstacle textures from Modal with fallbacks
@@ -223,7 +229,7 @@ public class SimpleTrackRunner : MonoBehaviour
         curbMat = CreateTexturedMaterial("tex_road_curb", new Color(0.55f, 0.55f, 0.5f));
         crosswalkHDMat = CreateTexturedMaterial("tex_road_crosswalk_hd", new Color(0.9f, 0.9f, 0.9f));
 
-        // Phase 3+6: Hi-res building textures (1024px) — expanded with Phase 6 buildings
+        // Phase 3+6+9: Hi-res building textures (1024px) — expanded with Phase 9 buildings
         hiResBuildingMats = new Material[]
         {
             CreateTexturedMaterial("tex_building_highrise_1", new Color(0.5f, 0.7f, 0.9f)),
@@ -233,7 +239,13 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_building_arcade", new Color(0.9f, 0.8f, 0.2f)),
             CreateTexturedMaterial("tex_building_hospital", new Color(0.9f, 0.9f, 0.95f)),
             CreateTexturedMaterial("tex_building_school", new Color(0.7f, 0.5f, 0.3f)),
-            CreateTexturedMaterial("tex_building_cinema", new Color(0.6f, 0.2f, 0.3f))
+            CreateTexturedMaterial("tex_building_cinema", new Color(0.6f, 0.2f, 0.3f)),
+            // Phase 9: 5 new building types from Modal
+            CreateTexturedMaterial("tex_building_apartment", new Color(0.6f, 0.45f, 0.35f)),
+            CreateTexturedMaterial("tex_building_office_tower", new Color(0.4f, 0.55f, 0.75f)),
+            CreateTexturedMaterial("tex_building_warehouse", new Color(0.45f, 0.45f, 0.45f)),
+            CreateTexturedMaterial("tex_building_diner", new Color(0.8f, 0.3f, 0.25f)),
+            CreateTexturedMaterial("tex_building_bookstore", new Color(0.55f, 0.4f, 0.3f))
         };
 
         // Phase 3: Environment details
@@ -404,6 +416,60 @@ public class SimpleTrackRunner : MonoBehaviour
             manhole.transform.localScale = new Vector3(1f, 0.04f, 1f);
             manhole.GetComponent<Renderer>().material = manholeMat;
             Destroy(manhole.GetComponent<Collider>());
+        }
+
+        // Phase 9: Ground detail - puddles (rain effect)
+        if (Random.value < 0.15f)
+        {
+            Material puddleMat = CreateTexturedMaterial("tex_ground_puddle", new Color(0.3f, 0.4f, 0.6f));
+            if (puddleMat.mainTexture != null)
+            {
+                GameObject puddle = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                puddle.name = "Puddle";
+                puddle.transform.SetParent(segment.transform);
+                float pdZ = Random.Range(5f, segmentLength - 5f);
+                int pdLane = Random.Range(-1, 2);
+                puddle.transform.localPosition = new Vector3(pdLane * laneWidth, 0.07f, pdZ);
+                puddle.transform.localScale = new Vector3(1.5f, 0.02f, 1f);
+                puddle.GetComponent<Renderer>().material = puddleMat;
+                Destroy(puddle.GetComponent<Collider>());
+            }
+        }
+
+        // Phase 9: Ground detail - drainage grates
+        if (Random.value < 0.12f)
+        {
+            Material grateMat = CreateTexturedMaterial("tex_ground_grate", new Color(0.35f, 0.35f, 0.35f));
+            if (grateMat.mainTexture != null)
+            {
+                GameObject grate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                grate.name = "Grate";
+                grate.transform.SetParent(segment.transform);
+                float grZ = Random.Range(5f, segmentLength - 5f);
+                int grSide = Random.value < 0.5f ? -1 : 1;
+                grate.transform.localPosition = new Vector3(grSide * 4.2f, 0.07f, grZ);
+                grate.transform.localScale = new Vector3(0.8f, 0.02f, 0.5f);
+                grate.GetComponent<Renderer>().material = grateMat;
+                Destroy(grate.GetComponent<Collider>());
+            }
+        }
+
+        // Phase 9: Road arrow markings
+        if (Random.value < 0.1f)
+        {
+            Material arrowMat = CreateTexturedMaterial("tex_road_marking_arrow", new Color(0.9f, 0.9f, 0.9f));
+            if (arrowMat.mainTexture != null)
+            {
+                GameObject arrow = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                arrow.name = "RoadArrow";
+                arrow.transform.SetParent(segment.transform);
+                float arZ = Random.Range(10f, segmentLength - 10f);
+                int arLane = Random.Range(-1, 2);
+                arrow.transform.localPosition = new Vector3(arLane * laneWidth, 0.08f, arZ);
+                arrow.transform.localScale = new Vector3(1.2f, 0.02f, 2f);
+                arrow.GetComponent<Renderer>().material = arrowMat;
+                Destroy(arrow.GetComponent<Collider>());
+            }
         }
 
         // Buildings with textures — Phase 3: mix hi-res (1024px) + original variants
