@@ -332,7 +332,7 @@ public class SimpleTrackRunner : MonoBehaviour
             Destroy(sw.GetComponent<Collider>());
         }
 
-        // Lane dividers (dashed)
+        // Phase 7: Thinner, subtler lane dividers (white dashed, not bright yellow)
         for (float lx = -1.25f; lx <= 1.25f; lx += 2.5f)
         {
             for (int d = 0; d < 5; d++)
@@ -341,8 +341,8 @@ public class SimpleTrackRunner : MonoBehaviour
                 line.name = "LaneDash";
                 line.transform.SetParent(segment.transform);
                 line.transform.localPosition = new Vector3(lx, 0.08f, d * 8f + 2f);
-                line.transform.localScale = new Vector3(0.12f, 0.04f, 4f);
-                line.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 1f, 0.8f));
+                line.transform.localScale = new Vector3(0.08f, 0.03f, 3f);
+                line.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.9f, 0.9f, 0.85f, 0.8f));
                 Destroy(line.GetComponent<Collider>());
             }
         }

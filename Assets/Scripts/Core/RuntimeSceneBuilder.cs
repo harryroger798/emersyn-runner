@@ -340,11 +340,13 @@ public class RuntimeSceneBuilder : MonoBehaviour
 
     private void SetupFog()
     {
+        // Phase 7: Improved fog — matches sky color, starts further for clearer near view
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.Linear;
-        RenderSettings.fogColor = new Color(0.55f, 0.75f, 0.95f);
-        RenderSettings.fogStartDistance = 80f;
-        RenderSettings.fogEndDistance = 200f;
+        RenderSettings.fogColor = new Color(0.5f, 0.75f, 0.95f);
+        RenderSettings.fogStartDistance = 100f;
+        RenderSettings.fogEndDistance = 250f;
+        if (mainCamera != null) mainCamera.backgroundColor = RenderSettings.fogColor;
     }
 
     private void CreateSkybox()
@@ -355,16 +357,15 @@ public class RuntimeSceneBuilder : MonoBehaviour
             mainCamera.backgroundColor = new Color(0.4f, 0.7f, 0.95f);
         }
 
-        // Phase 6: Sky gradient backdrop quad (textured if available)
+        // Phase 7: Sky gradient backdrop — pushed far back, camera-facing, subtle blend
         Texture2D skyTex = LoadTexture("tex_sky_gradient");
         if (skyTex != null)
         {
             GameObject skyQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             skyQuad.name = "SkyBackdrop";
-            skyQuad.transform.position = new Vector3(0f, 40f, 250f);
-            skyQuad.transform.localScale = new Vector3(500f, 200f, 1f);
-            Material skyMat = CreateTexturedMaterial("tex_sky_gradient", new Color(0.4f, 0.7f, 0.95f));
-            skyMat.SetFloat("_Mode", 0); // opaque
+            skyQuad.transform.position = new Vector3(0f, 60f, 280f);
+            skyQuad.transform.localScale = new Vector3(800f, 300f, 1f);
+            Material skyMat = CreateTexturedMaterial("tex_sky_gradient", new Color(0.5f, 0.75f, 0.95f));
             skyQuad.GetComponent<Renderer>().material = skyMat;
             Destroy(skyQuad.GetComponent<Collider>());
         }
@@ -423,6 +424,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
             Destroy(sidewalk.GetComponent<Collider>());
         }
 
+        // Phase 7: Thinner, subtler lane dividers
         for (float lx = -1.25f; lx <= 1.25f; lx += 2.5f)
         {
             for (int dash = 0; dash < 50; dash++)
@@ -431,8 +433,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
                 line.name = "LaneDash";
                 line.transform.SetParent(ground.transform);
                 line.transform.position = new Vector3(lx, 0.02f, dash * 8f);
-                line.transform.localScale = new Vector3(0.12f, 0.02f, 4f);
-                line.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 1f, 0.8f));
+                line.transform.localScale = new Vector3(0.08f, 0.02f, 3f);
+                line.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.9f, 0.9f, 0.85f, 0.8f));
                 Destroy(line.GetComponent<Collider>());
             }
         }
@@ -458,8 +460,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
         GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         body.name = "Body";
         body.transform.SetParent(player.transform);
-        body.transform.localPosition = new Vector3(0f, 0.4f, 0f);
-        body.transform.localScale = new Vector3(0.55f, 0.45f, 0.4f);
+        // Phase 7: Slightly taller, leaner torso for better proportions
+        body.transform.localPosition = new Vector3(0f, 0.45f, 0f);
+        body.transform.localScale = new Vector3(0.5f, 0.5f, 0.35f);
         body.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_emersyn_shirt",
             new Color(0.2f, 0.5f, 0.9f));
         Destroy(body.GetComponent<Collider>());
@@ -468,8 +471,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
         GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         head.name = "Head";
         head.transform.SetParent(player.transform);
-        head.transform.localPosition = new Vector3(0f, 1.1f, 0f);
-        head.transform.localScale = new Vector3(0.42f, 0.42f, 0.42f);
+        // Phase 7: Slightly bigger head for cartoon feel (Subway Surfers has big heads)
+        head.transform.localPosition = new Vector3(0f, 1.15f, 0f);
+        head.transform.localScale = new Vector3(0.48f, 0.48f, 0.46f);
         head.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_emersyn_skin",
             new Color(0.95f, 0.8f, 0.7f));
         Destroy(head.GetComponent<Collider>());
@@ -520,8 +524,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
             GameObject arm = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             arm.name = side < 0 ? "LeftArm" : "RightArm";
             arm.transform.SetParent(player.transform);
-            arm.transform.localPosition = new Vector3(side * 0.35f, 0.5f, 0f);
-            arm.transform.localScale = new Vector3(0.15f, 0.25f, 0.15f);
+            // Phase 7: Slightly thicker arms for cartoon feel
+            arm.transform.localPosition = new Vector3(side * 0.32f, 0.5f, 0f);
+            arm.transform.localScale = new Vector3(0.17f, 0.28f, 0.17f);
             arm.GetComponent<Renderer>().material = shirtMat;
             Destroy(arm.GetComponent<Collider>());
 
@@ -545,8 +550,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
             GameObject leg = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             leg.name = side < 0 ? "LeftLeg" : "RightLeg";
             leg.transform.SetParent(player.transform);
-            leg.transform.localPosition = new Vector3(side * 0.15f, -0.15f, 0f);
-            leg.transform.localScale = new Vector3(0.2f, 0.3f, 0.2f);
+            // Phase 7: Slightly thicker legs for cartoon feel
+            leg.transform.localPosition = new Vector3(side * 0.14f, -0.15f, 0f);
+            leg.transform.localScale = new Vector3(0.22f, 0.32f, 0.22f);
             leg.GetComponent<Renderer>().material = pantsMat;
             Destroy(leg.GetComponent<Collider>());
 
