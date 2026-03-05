@@ -355,6 +355,20 @@ public class RuntimeSceneBuilder : MonoBehaviour
             mainCamera.backgroundColor = new Color(0.4f, 0.7f, 0.95f);
         }
 
+        // Phase 6: Sky gradient backdrop quad (textured if available)
+        Texture2D skyTex = LoadTexture("tex_sky_gradient");
+        if (skyTex != null)
+        {
+            GameObject skyQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            skyQuad.name = "SkyBackdrop";
+            skyQuad.transform.position = new Vector3(0f, 40f, 250f);
+            skyQuad.transform.localScale = new Vector3(500f, 200f, 1f);
+            Material skyMat = CreateTexturedMaterial("tex_sky_gradient", new Color(0.4f, 0.7f, 0.95f));
+            skyMat.SetFloat("_Mode", 0); // opaque
+            skyQuad.GetComponent<Renderer>().material = skyMat;
+            Destroy(skyQuad.GetComponent<Collider>());
+        }
+
         // Phase 4: Improved clouds with better shapes and slight color variation
         for (int i = 0; i < 15; i++)
         {

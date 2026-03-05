@@ -142,7 +142,9 @@ public class SimpleTrackRunner : MonoBehaviour
 
         roadMat = CreateTexturedMaterialTiled("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         sidewalkMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
-        grassMat = CreateTexturedMaterial("tex_grass", new Color(0.35f, 0.55f, 0.25f));
+        // Phase 6: Use grass patch texture with more detail if available
+        grassMat = CreateTexturedMaterial("tex_ground_grass_patch", new Color(0.35f, 0.55f, 0.25f));
+        if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterial("tex_grass", new Color(0.35f, 0.55f, 0.25f));
         barrierMat = CreateTexturedMaterial("tex_barrier_red", new Color(0.9f, 0.2f, 0.15f));
         trainMat = CreateTexturedMaterial("tex_train_side", new Color(0.3f, 0.3f, 0.7f));
         coneMat = CreateTexturedMaterial("tex_cone_orange", new Color(1f, 0.5f, 0f));
@@ -150,7 +152,9 @@ public class SimpleTrackRunner : MonoBehaviour
         lampMat = CreateTexturedMaterial("tex_streetlamp", new Color(0.4f, 0.4f, 0.4f));
         graffitiMat = CreateTexturedMaterial("tex_graffiti_wall", new Color(0.6f, 0.5f, 0.5f));
 
-        coinMat = CreateTexturedMaterial("tex_coin_gold", new Color(1f, 0.85f, 0.1f));
+        // Phase 6: Use detailed coin texture if available, fallback to gold
+        coinMat = CreateTexturedMaterial("tex_coin_detailed", new Color(1f, 0.85f, 0.1f));
+        if (coinMat.mainTexture == null) coinMat = CreateTexturedMaterial("tex_coin_gold", new Color(1f, 0.85f, 0.1f));
         if (coinMat.HasProperty("_Metallic")) coinMat.SetFloat("_Metallic", 0.8f);
         if (coinMat.HasProperty("_Smoothness")) coinMat.SetFloat("_Smoothness", 0.9f);
 
@@ -199,14 +203,17 @@ public class SimpleTrackRunner : MonoBehaviour
         // Phase 3: Hi-res road texture (1024px)
         roadHDMat = CreateTexturedMaterialTiled("tex_road_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
 
-        // Phase 3: Hi-res building textures (1024px)
+        // Phase 3+6: Hi-res building textures (1024px) — expanded with Phase 6 buildings
         hiResBuildingMats = new Material[]
         {
             CreateTexturedMaterial("tex_building_highrise_1", new Color(0.5f, 0.7f, 0.9f)),
             CreateTexturedMaterial("tex_building_highrise_2", new Color(0.8f, 0.7f, 0.6f)),
             CreateTexturedMaterial("tex_building_industrial", new Color(0.4f, 0.4f, 0.4f)),
             CreateTexturedMaterial("tex_building_restaurant", new Color(0.9f, 0.4f, 0.2f)),
-            CreateTexturedMaterial("tex_building_arcade", new Color(0.9f, 0.8f, 0.2f))
+            CreateTexturedMaterial("tex_building_arcade", new Color(0.9f, 0.8f, 0.2f)),
+            CreateTexturedMaterial("tex_building_hospital", new Color(0.9f, 0.9f, 0.95f)),
+            CreateTexturedMaterial("tex_building_school", new Color(0.7f, 0.5f, 0.3f)),
+            CreateTexturedMaterial("tex_building_cinema", new Color(0.6f, 0.2f, 0.3f))
         };
 
         // Phase 3: Environment details
