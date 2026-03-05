@@ -334,7 +334,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
         fill.shadows = LightShadows.None;
         fillObj.transform.eulerAngles = new Vector3(30f, 150f, 0f);
 
-        RenderSettings.ambientLight = new Color(0.5f, 0.55f, 0.65f);
+        // Phase 10: Brighter ambient to reduce dark building sides
+        RenderSettings.ambientLight = new Color(0.65f, 0.7f, 0.8f);
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
     }
 
@@ -480,8 +481,10 @@ public class RuntimeSceneBuilder : MonoBehaviour
         // Phase 7: Slightly bigger head for cartoon feel (Subway Surfers has big heads)
         head.transform.localPosition = new Vector3(0f, 1.15f, 0f);
         head.transform.localScale = new Vector3(0.48f, 0.48f, 0.46f);
-        head.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_emersyn_skin",
-            new Color(0.95f, 0.8f, 0.7f));
+        // Phase 10: Use Phase 9 face detail texture with skin fallback
+        Material faceMat = CreateTexturedMaterial("tex_emersyn_face_detail", new Color(0.95f, 0.8f, 0.7f));
+        if (faceMat.mainTexture == null) faceMat = CreateTexturedMaterial("tex_emersyn_skin", new Color(0.95f, 0.8f, 0.7f));
+        head.GetComponent<Renderer>().material = faceMat;
         Destroy(head.GetComponent<Collider>());
         playerHead = head.transform;
 
@@ -490,8 +493,10 @@ public class RuntimeSceneBuilder : MonoBehaviour
         hair.transform.SetParent(player.transform);
         hair.transform.localPosition = new Vector3(0f, 1.28f, -0.04f);
         hair.transform.localScale = new Vector3(0.48f, 0.28f, 0.48f);
-        hair.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_emersyn_hair",
-            new Color(0.3f, 0.15f, 0.05f));
+        // Phase 10: Use Phase 9 brown hair texture with fallback
+        Material hairMat = CreateTexturedMaterial("tex_emersyn_hair_brown", new Color(0.3f, 0.15f, 0.05f));
+        if (hairMat.mainTexture == null) hairMat = CreateTexturedMaterial("tex_emersyn_hair", new Color(0.3f, 0.15f, 0.05f));
+        hair.GetComponent<Renderer>().material = hairMat;
         Destroy(hair.GetComponent<Collider>());
         playerHair = hair.transform;
 
@@ -549,7 +554,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
         }
 
         Material pantsMat = CreateTexturedMaterial("tex_emersyn_pants", new Color(0.2f, 0.2f, 0.35f));
-        Material shoesMat = CreateTexturedMaterial("tex_emersyn_shoes", new Color(0.9f, 0.2f, 0.15f));
+        // Phase 10: Use Phase 9 red shoes texture with fallback
+        Material shoesMat = CreateTexturedMaterial("tex_emersyn_shoes_red", new Color(0.9f, 0.2f, 0.15f));
+        if (shoesMat.mainTexture == null) shoesMat = CreateTexturedMaterial("tex_emersyn_shoes", new Color(0.9f, 0.2f, 0.15f));
 
         for (int side = -1; side <= 1; side += 2)
         {
@@ -579,7 +586,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
         backpack.transform.SetParent(player.transform);
         backpack.transform.localPosition = new Vector3(0f, 0.45f, -0.25f);
         backpack.transform.localScale = new Vector3(0.35f, 0.4f, 0.2f);
-        backpack.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.9f, 0.4f, 0.1f));
+        // Phase 10: Use Phase 9 backpack texture instead of flat orange
+        Material bpMat = CreateTexturedMaterial("tex_emersyn_backpack", new Color(0.9f, 0.4f, 0.1f));
+        backpack.GetComponent<Renderer>().material = bpMat;
         Destroy(backpack.GetComponent<Collider>());
 
         ApplyOutfit(selectedOutfit);

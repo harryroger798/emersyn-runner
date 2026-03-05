@@ -56,8 +56,8 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material curbMat;
     private Material crosswalkHDMat;
 
-    // Phase 3: Curved world effect
-    private float curvedWorldIntensity = 0.008f;
+    // Phase 3+10: Curved world effect (reduced from 0.008 to 0.005 to minimize grass stretching)
+    private float curvedWorldIntensity = 0.005f;
 
     private Shader litShader;
     private int segmentsSpawned = 0;
@@ -147,21 +147,29 @@ public class SimpleTrackRunner : MonoBehaviour
         // Phase 8: Use HD road asphalt and stone sidewalk textures from Modal
         roadMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
-        sidewalkMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.6f, 0.6f, 0.55f));
+        // Phase 10: Use HD sidewalk texture from Modal, fallback chain
+        sidewalkMat = CreateTexturedMaterial("tex_sidewalk_hd", new Color(0.6f, 0.6f, 0.55f));
+        if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
-        // Phase 6: Use grass patch texture with more detail if available
-        grassMat = CreateTexturedMaterial("tex_ground_grass_patch", new Color(0.35f, 0.55f, 0.25f));
-        if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterial("tex_grass", new Color(0.35f, 0.55f, 0.25f));
+        // Phase 10: Use HD grass texture from Modal with tiling to reduce stretching
+        grassMat = CreateTexturedMaterialTiled("tex_ground_grass_hd", new Color(0.35f, 0.55f, 0.25f), 4f, 4f);
+        if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_ground_grass_patch", new Color(0.35f, 0.55f, 0.25f), 4f, 4f);
+        if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_grass", new Color(0.35f, 0.55f, 0.25f), 4f, 4f);
         // Phase 8: Use HD barrier texture from Modal
         barrierMat = CreateTexturedMaterial("tex_obstacle_barrier_hd", new Color(0.9f, 0.2f, 0.15f));
         if (barrierMat.mainTexture == null) barrierMat = CreateTexturedMaterial("tex_barrier_red", new Color(0.9f, 0.2f, 0.15f));
         // Phase 8: Use HD train and cone textures from Modal
-        trainMat = CreateTexturedMaterial("tex_train_side_hd", new Color(0.3f, 0.3f, 0.7f));
+        // Phase 10: Use train front texture from Modal
+        trainMat = CreateTexturedMaterial("tex_train_front", new Color(0.3f, 0.3f, 0.7f));
+        if (trainMat.mainTexture == null) trainMat = CreateTexturedMaterial("tex_train_side_hd", new Color(0.3f, 0.3f, 0.7f));
         if (trainMat.mainTexture == null) trainMat = CreateTexturedMaterial("tex_train_side", new Color(0.3f, 0.3f, 0.7f));
         coneMat = CreateTexturedMaterial("tex_obstacle_cone_hd", new Color(1f, 0.5f, 0f));
         if (coneMat.mainTexture == null) coneMat = CreateTexturedMaterial("tex_cone_orange", new Color(1f, 0.5f, 0f));
-        fenceMat = CreateTexturedMaterial("tex_fence_metal", new Color(0.5f, 0.5f, 0.5f));
-        lampMat = CreateTexturedMaterial("tex_streetlamp", new Color(0.4f, 0.4f, 0.4f));
+        // Phase 10: Use chain link fence and streetlight textures from Modal
+        fenceMat = CreateTexturedMaterial("tex_fence_chain_link", new Color(0.5f, 0.5f, 0.5f));
+        if (fenceMat.mainTexture == null) fenceMat = CreateTexturedMaterial("tex_fence_metal", new Color(0.5f, 0.5f, 0.5f));
+        lampMat = CreateTexturedMaterial("tex_streetlight_pole", new Color(0.4f, 0.4f, 0.4f));
+        if (lampMat.mainTexture == null) lampMat = CreateTexturedMaterial("tex_streetlamp", new Color(0.4f, 0.4f, 0.4f));
         graffitiMat = CreateTexturedMaterial("tex_graffiti_wall", new Color(0.6f, 0.5f, 0.5f));
 
         // Phase 6: Use detailed coin texture if available, fallback to gold
@@ -214,10 +222,11 @@ public class SimpleTrackRunner : MonoBehaviour
         busMat = CreateTexturedMaterial("tex_obstacle_bus_side", new Color(0.3f, 0.4f, 0.7f));
         if (busMat.mainTexture == null) busMat = CreateTexturedMaterial("tex_obstacle_bus", new Color(0.3f, 0.4f, 0.7f));
 
+        // Phase 10: Use HD graffiti train texture from Modal
         trainVariantMats = new Material[]
         {
             trainMat,
-            CreateTexturedMaterial("tex_train_graffiti_2", new Color(0.4f, 0.3f, 0.5f)),
+            CreateTexturedMaterial("tex_train_graffiti_hd", new Color(0.4f, 0.3f, 0.5f)),
             CreateTexturedMaterial("tex_train_clean", new Color(0.7f, 0.7f, 0.75f))
         };
 
@@ -245,7 +254,12 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_building_office_tower", new Color(0.4f, 0.55f, 0.75f)),
             CreateTexturedMaterial("tex_building_warehouse", new Color(0.45f, 0.45f, 0.45f)),
             CreateTexturedMaterial("tex_building_diner", new Color(0.8f, 0.3f, 0.25f)),
-            CreateTexturedMaterial("tex_building_bookstore", new Color(0.55f, 0.4f, 0.3f))
+            CreateTexturedMaterial("tex_building_bookstore", new Color(0.55f, 0.4f, 0.3f)),
+            // Phase 10: 4 new building types from Modal
+            CreateTexturedMaterial("tex_building_skyscraper", new Color(0.4f, 0.6f, 0.8f)),
+            CreateTexturedMaterial("tex_building_brick_shop", new Color(0.6f, 0.4f, 0.3f)),
+            CreateTexturedMaterial("tex_building_hotel", new Color(0.7f, 0.6f, 0.5f)),
+            CreateTexturedMaterial("tex_building_gym", new Color(0.5f, 0.5f, 0.6f))
         };
 
         // Phase 3: Environment details
