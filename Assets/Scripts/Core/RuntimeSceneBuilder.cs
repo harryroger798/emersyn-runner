@@ -82,17 +82,27 @@ public class RuntimeSceneBuilder : MonoBehaviour
     };
     private static readonly string[] boardTextures = new string[]
     {
-        "", "tex_board_galaxy", "tex_board_blue_flame", "tex_board_lightning", "tex_board_rainbow", "tex_board_pixel"
+        "", "tex_board_galaxy", "tex_board_blue_flame", "tex_board_lightning", "tex_board_rainbow", "tex_board_pixel",
+        "tex_board_fire", "tex_board_ocean", "tex_board_neon_city"
     };
     private static readonly Color[] boardFallbacks = new Color[]
     {
         Color.clear, new Color(0.2f, 0.1f, 0.5f), new Color(0.1f, 0.3f, 0.9f),
-        new Color(0.9f, 0.8f, 0.1f), new Color(0.9f, 0.2f, 0.3f), new Color(0.3f, 0.8f, 0.3f)
+        new Color(0.9f, 0.8f, 0.1f), new Color(0.9f, 0.2f, 0.3f), new Color(0.3f, 0.8f, 0.3f),
+        new Color(0.9f, 0.3f, 0.1f), new Color(0.1f, 0.5f, 0.8f), new Color(0.7f, 0.2f, 0.9f)
     };
     private static readonly string[] boardNames = new string[]
     {
-        "No Board", "Galaxy", "Blue Flame", "Lightning", "Rainbow", "Pixel"
+        "No Board", "Galaxy", "Blue Flame", "Lightning", "Rainbow", "Pixel",
+        "Fire", "Ocean", "Neon City"
     };
+    // Phase 3: Portrait textures for character selection
+    private static readonly string[] portraitTextures = new string[]
+    {
+        "tex_portrait_classic", "tex_portrait_red_hoodie", "tex_portrait_green_jacket",
+        "tex_portrait_orange_vest", "tex_portrait_purple", "tex_portrait_pink"
+    };
+    private GameObject portraitImage;
 
     // Player movement
     private int currentLane = 0;
@@ -541,23 +551,55 @@ public class RuntimeSceneBuilder : MonoBehaviour
         hoverboard.transform.SetParent(player.transform);
         hoverboard.transform.localPosition = new Vector3(0f, -0.3f, 0f);
 
+        // Phase 3: Enhanced hoverboard with better shape
         GameObject deck = GameObject.CreatePrimitive(PrimitiveType.Cube);
         deck.name = "Deck";
         deck.transform.SetParent(hoverboard.transform);
         deck.transform.localPosition = Vector3.zero;
-        deck.transform.localScale = new Vector3(0.5f, 0.06f, 1.2f);
+        deck.transform.localScale = new Vector3(0.55f, 0.07f, 1.3f);
         deck.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.2f, 0.1f, 0.5f));
         Destroy(deck.GetComponent<Collider>());
 
-        // Glow underside
+        // Phase 3: Front nose curve (capsule)
+        GameObject nose = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        nose.name = "Nose";
+        nose.transform.SetParent(hoverboard.transform);
+        nose.transform.localPosition = new Vector3(0f, 0f, 0.7f);
+        nose.transform.localScale = new Vector3(0.5f, 0.07f, 0.2f);
+        nose.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.2f, 0.1f, 0.5f));
+        Destroy(nose.GetComponent<Collider>());
+
+        // Phase 3: Tail kick
+        GameObject tail = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        tail.name = "Tail";
+        tail.transform.SetParent(hoverboard.transform);
+        tail.transform.localPosition = new Vector3(0f, 0.03f, -0.65f);
+        tail.transform.localScale = new Vector3(0.5f, 0.08f, 0.15f);
+        tail.transform.localRotation = Quaternion.Euler(15f, 0f, 0f);
+        tail.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.15f, 0.6f));
+        Destroy(tail.GetComponent<Collider>());
+
+        // Glow underside (brighter, pulsing via script)
         GameObject glow = GameObject.CreatePrimitive(PrimitiveType.Cube);
         glow.name = "Glow";
         glow.transform.SetParent(hoverboard.transform);
-        glow.transform.localPosition = new Vector3(0f, -0.05f, 0f);
-        glow.transform.localScale = new Vector3(0.45f, 0.02f, 1.1f);
-        Material glowMat = CreateColorMaterial(new Color(0.3f, 0.6f, 1f, 0.7f));
+        glow.transform.localPosition = new Vector3(0f, -0.06f, 0f);
+        glow.transform.localScale = new Vector3(0.5f, 0.02f, 1.2f);
+        Material glowMat = CreateColorMaterial(new Color(0.3f, 0.6f, 1f, 0.8f));
         glow.GetComponent<Renderer>().material = glowMat;
         Destroy(glow.GetComponent<Collider>());
+
+        // Phase 3: Side rails
+        for (int rs = -1; rs <= 1; rs += 2)
+        {
+            GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rail.name = "Rail";
+            rail.transform.SetParent(hoverboard.transform);
+            rail.transform.localPosition = new Vector3(rs * 0.25f, 0.04f, 0f);
+            rail.transform.localScale = new Vector3(0.03f, 0.04f, 1.1f);
+            rail.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.6f, 0.6f, 0.7f));
+            Destroy(rail.GetComponent<Collider>());
+        }
 
         hoverboard.SetActive(false); // Hidden by default, shown when board selected
     }
@@ -686,17 +728,18 @@ public class RuntimeSceneBuilder : MonoBehaviour
         ParticleSystemRenderer speedRend = speedObj.GetComponent<ParticleSystemRenderer>();
         speedRend.material = CreateColorMaterial(Color.white);
 
+        // Phase 3: Enhanced dust particles
         GameObject dustObj = new GameObject("DustParticles");
         dustObj.transform.SetParent(player.transform);
-        dustObj.transform.localPosition = new Vector3(0f, 0f, 0f);
+        dustObj.transform.localPosition = new Vector3(0f, 0f, -0.5f);
         dustPS = dustObj.AddComponent<ParticleSystem>();
         var dustMain = dustPS.main;
-        dustMain.startSpeed = 2f;
-        dustMain.startLifetime = 0.5f;
-        dustMain.startSize = 0.3f;
-        dustMain.startColor = new Color(0.7f, 0.65f, 0.5f, 0.5f);
-        dustMain.maxParticles = 20;
-        dustMain.gravityModifier = -0.5f;
+        dustMain.startSpeed = 3f;
+        dustMain.startLifetime = 0.6f;
+        dustMain.startSize = 0.4f;
+        dustMain.startColor = new Color(0.7f, 0.65f, 0.5f, 0.6f);
+        dustMain.maxParticles = 30;
+        dustMain.gravityModifier = -0.3f;
         var dustEmission = dustPS.emission;
         dustEmission.rateOverTime = 0f;
         var dustShape = dustPS.shape;
@@ -705,24 +748,65 @@ public class RuntimeSceneBuilder : MonoBehaviour
         ParticleSystemRenderer dustRend = dustObj.GetComponent<ParticleSystemRenderer>();
         dustRend.material = CreateColorMaterial(new Color(0.7f, 0.65f, 0.5f, 0.5f));
 
+        // Phase 3: Enhanced coin collect burst with VFX texture
         GameObject coinPObj = new GameObject("CoinParticles");
         coinPObj.transform.SetParent(player.transform);
         coinPObj.transform.localPosition = new Vector3(0f, 1f, 0f);
         coinCollectPS = coinPObj.AddComponent<ParticleSystem>();
         var coinMain = coinCollectPS.main;
-        coinMain.startSpeed = 5f;
-        coinMain.startLifetime = 0.4f;
-        coinMain.startSize = 0.15f;
-        coinMain.startColor = new Color(1f, 0.85f, 0.1f, 0.9f);
-        coinMain.maxParticles = 15;
-        coinMain.gravityModifier = 1f;
+        coinMain.startSpeed = 6f;
+        coinMain.startLifetime = 0.5f;
+        coinMain.startSize = 0.2f;
+        coinMain.startColor = new Color(1f, 0.85f, 0.1f, 0.95f);
+        coinMain.maxParticles = 20;
+        coinMain.gravityModifier = 0.8f;
         var coinEmission = coinCollectPS.emission;
         coinEmission.rateOverTime = 0f;
         var coinShape = coinCollectPS.shape;
         coinShape.shapeType = ParticleSystemShapeType.Sphere;
-        coinShape.radius = 0.3f;
+        coinShape.radius = 0.4f;
         ParticleSystemRenderer coinRend = coinPObj.GetComponent<ParticleSystemRenderer>();
-        coinRend.material = CreateColorMaterial(new Color(1f, 0.85f, 0.1f));
+        // Try Phase 3 VFX texture for coin collect burst
+        Texture2D coinVfxTex = LoadTexture("tex_vfx_coin_collect");
+        if (coinVfxTex != null)
+        {
+            Material coinVfxMat = new Material(FindWorkingShader());
+            coinVfxMat.mainTexture = coinVfxTex;
+            if (coinVfxMat.HasProperty("_BaseMap")) coinVfxMat.SetTexture("_BaseMap", coinVfxTex);
+            coinRend.material = coinVfxMat;
+        }
+        else
+        {
+            coinRend.material = CreateColorMaterial(new Color(1f, 0.85f, 0.1f));
+        }
+
+        // Phase 3: Jump ring effect
+        GameObject jumpRingObj = new GameObject("JumpRingParticles");
+        jumpRingObj.transform.SetParent(player.transform);
+        jumpRingObj.transform.localPosition = new Vector3(0f, 0f, 0f);
+        ParticleSystem jumpRingPS = jumpRingObj.AddComponent<ParticleSystem>();
+        var jrMain = jumpRingPS.main;
+        jrMain.startSpeed = 0.5f;
+        jrMain.startLifetime = 0.3f;
+        jrMain.startSize = 1.5f;
+        jrMain.startColor = new Color(0.3f, 0.7f, 1f, 0.6f);
+        jrMain.maxParticles = 5;
+        jrMain.simulationSpace = ParticleSystemSimulationSpace.World;
+        var jrEmission = jumpRingPS.emission;
+        jrEmission.rateOverTime = 0f;
+        ParticleSystemRenderer jrRend = jumpRingObj.GetComponent<ParticleSystemRenderer>();
+        Texture2D jumpRingTex = LoadTexture("tex_vfx_jump_ring");
+        if (jumpRingTex != null)
+        {
+            Material jrMat = new Material(FindWorkingShader());
+            jrMat.mainTexture = jumpRingTex;
+            if (jrMat.HasProperty("_BaseMap")) jrMat.SetTexture("_BaseMap", jumpRingTex);
+            jrRend.material = jrMat;
+        }
+        else
+        {
+            jrRend.material = CreateColorMaterial(new Color(0.3f, 0.7f, 1f, 0.6f));
+        }
     }
 
     private void PositionCamera()
@@ -761,40 +845,55 @@ public class RuntimeSceneBuilder : MonoBehaviour
             new Vector2(0f, 40f), 36, new Color(1f, 0.85f, 0.1f), FontStyle.Bold);
 
         CreateButton(mainMenuPanel.transform, "PlayButton", "PLAY",
-            new Vector2(0f, -100f), new Vector2(350f, 80f),
+            new Vector2(0f, -60f), new Vector2(350f, 80f),
             new Color(0.1f, 0.75f, 0.3f), OnPlayClicked);
+
+        // Phase 3: Character portrait display
+        portraitImage = new GameObject("PortraitImage");
+        portraitImage.transform.SetParent(mainMenuPanel.transform, false);
+        RectTransform prt = portraitImage.AddComponent<RectTransform>();
+        prt.anchoredPosition = new Vector2(0f, -200f);
+        prt.sizeDelta = new Vector2(120f, 120f);
+        Image portraitImg = portraitImage.AddComponent<Image>();
+        portraitImg.color = Color.white;
+        UpdatePortraitDisplay();
+
+        // Outline around portrait
+        Outline portraitOutline = portraitImage.AddComponent<Outline>();
+        portraitOutline.effectColor = new Color(1f, 0.85f, 0.1f, 0.9f);
+        portraitOutline.effectDistance = new Vector2(3f, -3f);
 
         // Character selection buttons
         CreateButton(mainMenuPanel.transform, "OutfitLeftBtn", "<",
-            new Vector2(-200f, -250f), new Vector2(60f, 60f),
+            new Vector2(-200f, -280f), new Vector2(60f, 60f),
             new Color(0.3f, 0.3f, 0.4f), OnOutfitPrev);
 
         outfitLabel = CreateUIText(mainMenuPanel.transform, "OutfitLabel", outfitNames[selectedOutfit],
-            new Vector2(0f, -250f), 24, Color.white, FontStyle.Bold);
+            new Vector2(0f, -280f), 24, Color.white, FontStyle.Bold);
 
         CreateButton(mainMenuPanel.transform, "OutfitRightBtn", ">",
-            new Vector2(200f, -250f), new Vector2(60f, 60f),
+            new Vector2(200f, -280f), new Vector2(60f, 60f),
             new Color(0.3f, 0.3f, 0.4f), OnOutfitNext);
 
         CreateUIText(mainMenuPanel.transform, "OutfitTitle", "OUTFIT",
-            new Vector2(0f, -210f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
+            new Vector2(0f, -240f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
 
         // Board selection buttons
         CreateButton(mainMenuPanel.transform, "BoardLeftBtn", "<",
-            new Vector2(-200f, -350f), new Vector2(60f, 60f),
+            new Vector2(-200f, -380f), new Vector2(60f, 60f),
             new Color(0.3f, 0.3f, 0.4f), OnBoardPrev);
 
         boardLabel = CreateUIText(mainMenuPanel.transform, "BoardLabel", boardNames[selectedBoard],
-            new Vector2(0f, -350f), 24, Color.white, FontStyle.Bold);
+            new Vector2(0f, -380f), 24, Color.white, FontStyle.Bold);
 
         CreateButton(mainMenuPanel.transform, "BoardRightBtn", ">",
-            new Vector2(200f, -350f), new Vector2(60f, 60f),
+            new Vector2(200f, -380f), new Vector2(60f, 60f),
             new Color(0.3f, 0.3f, 0.4f), OnBoardNext);
 
         CreateUIText(mainMenuPanel.transform, "BoardTitle", "HOVERBOARD",
-            new Vector2(0f, -310f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
+            new Vector2(0f, -340f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
 
-        CreateUIText(mainMenuPanel.transform, "VersionText", "v3.0 AAA - Modal GPU Generated",
+        CreateUIText(mainMenuPanel.transform, "VersionText", "v4.0 Phase 3 - Curved World + Hi-Res",
             new Vector2(0f, -800f), 18, new Color(0.5f, 0.5f, 0.5f), FontStyle.Normal);
 
         hudPanel = CreatePanel(canvasObj.transform, "HUDPanel");
@@ -846,7 +945,32 @@ public class RuntimeSceneBuilder : MonoBehaviour
         if (name != "HUDPanel")
         {
             Image bg = panel.AddComponent<Image>();
-            bg.color = new Color(0f, 0f, 0.05f, 0.7f);
+            // Phase 3: Try gradient texture backgrounds for panels
+            string bgTexName = null;
+            if (name == "MainMenuPanel") bgTexName = "tex_ui_bg_gradient_purple";
+            else if (name == "GameOverPanel") bgTexName = "tex_ui_bg_gradient_blue";
+
+            if (bgTexName != null)
+            {
+                Texture2D bgTex = LoadTexture(bgTexName);
+                if (bgTex != null)
+                {
+                    Sprite bgSprite = Sprite.Create(bgTex,
+                        new Rect(0, 0, bgTex.width, bgTex.height),
+                        new Vector2(0.5f, 0.5f));
+                    bg.sprite = bgSprite;
+                    bg.type = Image.Type.Simple;
+                    bg.color = new Color(1f, 1f, 1f, 0.85f);
+                }
+                else
+                {
+                    bg.color = new Color(0f, 0f, 0.05f, 0.7f);
+                }
+            }
+            else
+            {
+                bg.color = new Color(0f, 0f, 0.05f, 0.7f);
+            }
         }
 
         return panel;
@@ -955,12 +1079,34 @@ public class RuntimeSceneBuilder : MonoBehaviour
         ShowMainMenu();
     }
 
+    private void UpdatePortraitDisplay()
+    {
+        if (portraitImage == null) return;
+        Image img = portraitImage.GetComponent<Image>();
+        if (img == null) return;
+
+        int idx = Mathf.Clamp(selectedOutfit, 0, portraitTextures.Length - 1);
+        Texture2D tex = LoadTexture(portraitTextures[idx]);
+        if (tex != null)
+        {
+            Sprite spr = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            img.sprite = spr;
+            img.color = Color.white;
+        }
+        else
+        {
+            img.sprite = null;
+            img.color = outfitFallbacks[idx][0];
+        }
+    }
+
     private void OnOutfitPrev()
     {
         PlaySFX("sfx_click");
         selectedOutfit = (selectedOutfit - 1 + outfitNames.Length) % outfitNames.Length;
         if (outfitLabel != null) outfitLabel.text = outfitNames[selectedOutfit];
         ApplyOutfit(selectedOutfit);
+        UpdatePortraitDisplay();
     }
 
     private void OnOutfitNext()
@@ -969,6 +1115,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         selectedOutfit = (selectedOutfit + 1) % outfitNames.Length;
         if (outfitLabel != null) outfitLabel.text = outfitNames[selectedOutfit];
         ApplyOutfit(selectedOutfit);
+        UpdatePortraitDisplay();
     }
 
     private void OnBoardPrev()
@@ -1358,8 +1505,15 @@ public class RuntimeSceneBuilder : MonoBehaviour
             );
         }
 
-        Vector3 lookTarget = player.transform.position + Vector3.forward * 10f + Vector3.up * 2f;
+        // Phase 3: Curved-world camera tilt — slight downward angle for Subway Surfers feel
+        Vector3 lookTarget = player.transform.position + Vector3.forward * 12f + Vector3.up * 1.5f;
         mainCamera.transform.LookAt(lookTarget);
+
+        // Phase 3: Subtle camera rotation based on lane for dynamic feel
+        float laneOffset = (player.transform.position.x - targetX) * 0.3f;
+        Quaternion currentRot = mainCamera.transform.rotation;
+        Quaternion tiltRot = currentRot * Quaternion.Euler(0f, 0f, laneOffset);
+        mainCamera.transform.rotation = Quaternion.Slerp(currentRot, tiltRot, Time.deltaTime * 5f);
     }
 
     private void CheckCollisions()

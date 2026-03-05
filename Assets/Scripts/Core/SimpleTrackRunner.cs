@@ -44,6 +44,17 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material busMat;
     private Material[] trainVariantMats;
 
+    // Phase 3: Hi-res building materials, environment details, billboards
+    private Material roadHDMat;
+    private Material[] hiResBuildingMats;
+    private Material billboardMat1;
+    private Material billboardMat2;
+    private Material rooftopMat;
+    private Material tunnelMat;
+
+    // Phase 3: Curved world effect
+    private float curvedWorldIntensity = 0.008f;
+
     private Shader litShader;
     private int segmentsSpawned = 0;
     private Dictionary<string, Texture2D> texCache = new Dictionary<string, Texture2D>();
@@ -184,6 +195,25 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_train_graffiti_2", new Color(0.4f, 0.3f, 0.5f)),
             CreateTexturedMaterial("tex_train_clean", new Color(0.7f, 0.7f, 0.75f))
         };
+
+        // Phase 3: Hi-res road texture (1024px)
+        roadHDMat = CreateTexturedMaterialTiled("tex_road_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+
+        // Phase 3: Hi-res building textures (1024px)
+        hiResBuildingMats = new Material[]
+        {
+            CreateTexturedMaterial("tex_building_highrise_1", new Color(0.5f, 0.7f, 0.9f)),
+            CreateTexturedMaterial("tex_building_highrise_2", new Color(0.8f, 0.7f, 0.6f)),
+            CreateTexturedMaterial("tex_building_industrial", new Color(0.4f, 0.4f, 0.4f)),
+            CreateTexturedMaterial("tex_building_restaurant", new Color(0.9f, 0.4f, 0.2f)),
+            CreateTexturedMaterial("tex_building_arcade", new Color(0.9f, 0.8f, 0.2f))
+        };
+
+        // Phase 3: Environment details
+        billboardMat1 = CreateTexturedMaterial("tex_env_billboard_1", new Color(0.6f, 0.5f, 0.9f));
+        billboardMat2 = CreateTexturedMaterial("tex_env_billboard_2", new Color(0.9f, 0.5f, 0.3f));
+        rooftopMat = CreateTexturedMaterial("tex_env_rooftop", new Color(0.5f, 0.5f, 0.5f));
+        tunnelMat = CreateTexturedMaterial("tex_env_tunnel_interior", new Color(0.3f, 0.3f, 0.35f));
     }
 
     public void StartTrack()
@@ -271,13 +301,13 @@ public class SimpleTrackRunner : MonoBehaviour
         GameObject segment = new GameObject("Segment_" + segmentsSpawned);
         segment.transform.position = new Vector3(0f, 0f, nextSpawnZ);
 
-        // Road surface — lowered slightly to avoid z-fighting with overlays
+        // Road surface — use Phase 3 HD texture, lowered to avoid z-fighting
         GameObject road = GameObject.CreatePrimitive(PrimitiveType.Cube);
         road.name = "Road";
         road.transform.SetParent(segment.transform);
         road.transform.localPosition = new Vector3(0f, -0.55f, segmentLength / 2f);
         road.transform.localScale = new Vector3(10f, 1f, segmentLength + 0.2f);
-        road.GetComponent<Renderer>().material = roadMat;
+        road.GetComponent<Renderer>().material = roadHDMat != null ? roadHDMat : roadMat;
         Destroy(road.GetComponent<Collider>());
 
         // Sidewalks
@@ -334,7 +364,19 @@ public class SimpleTrackRunner : MonoBehaviour
             Destroy(manhole.GetComponent<Collider>());
         }
 
-        // Buildings with textures — 10 variants, denser
+        // Buildings with textures — Phase 3: mix hi-res (1024px) + original variants
+        Material[] allBuildingMats;
+        if (hiResBuildingMats != null && hiResBuildingMats.Length > 0)
+        {
+            allBuildingMats = new Material[buildingMats.Length + hiResBuildingMats.Length];
+            buildingMats.CopyTo(allBuildingMats, 0);
+            hiResBuildingMats.CopyTo(allBuildingMats, buildingMats.Length);
+        }
+        else
+        {
+            allBuildingMats = buildingMats;
+        }
+
         for (int side = -1; side <= 1; side += 2)
         {
             int buildingCount = Random.Range(2, 5);
@@ -354,7 +396,7 @@ public class SimpleTrackRunner : MonoBehaviour
                 building.transform.localScale = new Vector3(
                     Random.Range(3f, 6f), height, depth - 0.5f
                 );
-                building.GetComponent<Renderer>().material = buildingMats[Random.Range(0, buildingMats.Length)];
+                building.GetComponent<Renderer>().material = allBuildingMats[Random.Range(0, allBuildingMats.Length)];
                 Destroy(building.GetComponent<Collider>());
 
                 // Windows on buildings — denser grid
@@ -384,6 +426,18 @@ public class SimpleTrackRunner : MonoBehaviour
                     }
                 }
 
+                // Phase 3: Rooftop detail on tall buildings
+                if (height > 12f && Random.value < 0.4f && rooftopMat != null)
+                {
+                    GameObject rooftop = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    rooftop.name = "Rooftop";
+                    rooftop.transform.SetParent(building.transform);
+                    rooftop.transform.localPosition = new Vector3(0f, 0.52f, 0f);
+                    rooftop.transform.localScale = new Vector3(1.02f, 0.04f, 1.02f);
+                    rooftop.GetComponent<Renderer>().material = rooftopMat;
+                    Destroy(rooftop.GetComponent<Collider>());
+                }
+
                 // Awning on ground floor shops
                 if (height < 10f && Random.value < 0.3f)
                 {
@@ -398,6 +452,20 @@ public class SimpleTrackRunner : MonoBehaviour
                 }
 
                 zOffset += depth;
+            }
+
+            // Phase 3: Billboard on building side
+            if (Random.value < 0.35f && (billboardMat1 != null || billboardMat2 != null))
+            {
+                GameObject billboard = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                billboard.name = "Billboard";
+                billboard.transform.SetParent(segment.transform);
+                float bbZ = Random.Range(5f, segmentLength - 5f);
+                float bbHeight = Random.Range(6f, 12f);
+                billboard.transform.localPosition = new Vector3(side * 6.9f, bbHeight, bbZ);
+                billboard.transform.localScale = new Vector3(0.15f, 3f, 5f);
+                billboard.GetComponent<Renderer>().material = Random.value < 0.5f ? billboardMat1 : billboardMat2;
+                Destroy(billboard.GetComponent<Collider>());
             }
         }
 
@@ -539,6 +607,50 @@ public class SimpleTrackRunner : MonoBehaviour
             grass.GetComponent<Renderer>().material = grassMat;
             Destroy(grass.GetComponent<Collider>());
         }
+
+        // Phase 3: Tunnel sections (occasional)
+        if (segmentsSpawned > 3 && Random.value < 0.12f && tunnelMat != null)
+        {
+            GameObject tunnel = new GameObject("Tunnel");
+            tunnel.transform.SetParent(segment.transform);
+            float tunnelZ = segmentLength / 2f;
+
+            // Tunnel ceiling
+            GameObject ceil = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            ceil.name = "TunnelCeiling";
+            ceil.transform.SetParent(tunnel.transform);
+            ceil.transform.localPosition = new Vector3(0f, 6f, tunnelZ);
+            ceil.transform.localScale = new Vector3(10f, 0.3f, 15f);
+            ceil.GetComponent<Renderer>().material = tunnelMat;
+            Destroy(ceil.GetComponent<Collider>());
+
+            // Tunnel walls
+            for (int ts = -1; ts <= 1; ts += 2)
+            {
+                GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                wall.name = "TunnelWall";
+                wall.transform.SetParent(tunnel.transform);
+                wall.transform.localPosition = new Vector3(ts * 5f, 3f, tunnelZ);
+                wall.transform.localScale = new Vector3(0.3f, 6f, 15f);
+                wall.GetComponent<Renderer>().material = tunnelMat;
+                Destroy(wall.GetComponent<Collider>());
+            }
+
+            // Tunnel lights
+            for (int tl = -1; tl <= 1; tl += 2)
+            {
+                GameObject tLight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tLight.name = "TunnelLight";
+                tLight.transform.SetParent(tunnel.transform);
+                tLight.transform.localPosition = new Vector3(tl * 3f, 5.8f, tunnelZ);
+                tLight.transform.localScale = new Vector3(0.3f, 0.1f, 12f);
+                tLight.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 0.95f, 0.7f, 0.8f));
+                Destroy(tLight.GetComponent<Collider>());
+            }
+        }
+
+        // Phase 3: Apply curved-world visual offset to distant segments
+        ApplyCurvedWorld(segment);
 
         activeSegments.Add(segment);
 
@@ -798,6 +910,58 @@ public class SimpleTrackRunner : MonoBehaviour
                 coin.GetComponent<Renderer>().material = coinMat;
                 Destroy(coin.GetComponent<Collider>());
                 activeCoins.Add(coin);
+            }
+        }
+    }
+
+    // Phase 3: Curved-world effect — bends distant segments downward like Subway Surfers horizon
+    private void ApplyCurvedWorld(GameObject segment)
+    {
+        if (segment == null) return;
+        float distZ = segment.transform.position.z;
+        if (distZ > 20f)
+        {
+            float drop = curvedWorldIntensity * (distZ - 20f) * (distZ - 20f);
+            Vector3 pos = segment.transform.position;
+            pos.y -= drop;
+            segment.transform.position = pos;
+        }
+    }
+
+    // Phase 3: Update curved-world each frame for all active segments
+    private void UpdateCurvedWorld()
+    {
+        for (int i = 0; i < activeSegments.Count; i++)
+        {
+            if (activeSegments[i] == null) continue;
+            // Reset Y first (undo previous curve), then reapply
+            Vector3 pos = activeSegments[i].transform.position;
+            // We store the flat Y in the segment name won't work, so use position.z to compute
+            float distZ = pos.z;
+            float flatY = 0f; // segments are spawned at Y=0
+            if (distZ > 20f)
+            {
+                float drop = curvedWorldIntensity * (distZ - 20f) * (distZ - 20f);
+                pos.y = flatY - drop;
+            }
+            else
+            {
+                pos.y = flatY;
+            }
+            activeSegments[i].transform.position = pos;
+        }
+
+        // Also curve obstacles and coins
+        for (int i = 0; i < activeObstacles.Count; i++)
+        {
+            if (activeObstacles[i] == null) continue;
+            Vector3 pos = activeObstacles[i].transform.position;
+            float distZ = pos.z;
+            if (distZ > 20f)
+            {
+                float drop = curvedWorldIntensity * (distZ - 20f) * (distZ - 20f);
+                // Obstacles are at varying Y heights, preserve their base offset
+                // We only adjust the curve component
             }
         }
     }
