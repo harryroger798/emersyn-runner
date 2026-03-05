@@ -68,3 +68,5 @@ Thumbs.db
 *.env
 secrets/
 credentials/
+Unity_v2022.3.62f3.alf
+Tools/__pycache__/
