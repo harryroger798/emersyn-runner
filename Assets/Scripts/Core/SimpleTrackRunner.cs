@@ -108,6 +108,15 @@ public class SimpleTrackRunner : MonoBehaviour
         return CreateColorMaterial(fallback);
     }
 
+    private Material CreateTexturedMaterialTiled(string texName, Color fallback, float tilingX, float tilingY)
+    {
+        Material mat = CreateTexturedMaterial(texName, fallback);
+        mat.mainTextureScale = new Vector2(tilingX, tilingY);
+        if (mat.HasProperty("_BaseMap"))
+            mat.SetTextureScale("_BaseMap", new Vector2(tilingX, tilingY));
+        return mat;
+    }
+
     private Texture2D LoadTex(string name)
     {
         if (texCache.ContainsKey(name)) return texCache[name];
@@ -120,7 +129,7 @@ public class SimpleTrackRunner : MonoBehaviour
     {
         litShader = FindWorkingShader();
 
-        roadMat = CreateTexturedMaterial("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f));
+        roadMat = CreateTexturedMaterialTiled("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         sidewalkMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
         grassMat = CreateTexturedMaterial("tex_grass", new Color(0.3f, 0.7f, 0.2f));
         barrierMat = CreateTexturedMaterial("tex_barrier_red", new Color(0.9f, 0.2f, 0.15f));
@@ -262,12 +271,12 @@ public class SimpleTrackRunner : MonoBehaviour
         GameObject segment = new GameObject("Segment_" + segmentsSpawned);
         segment.transform.position = new Vector3(0f, 0f, nextSpawnZ);
 
-        // Road surface
+        // Road surface — lowered slightly to avoid z-fighting with overlays
         GameObject road = GameObject.CreatePrimitive(PrimitiveType.Cube);
         road.name = "Road";
         road.transform.SetParent(segment.transform);
-        road.transform.localPosition = new Vector3(0f, -0.5f, segmentLength / 2f);
-        road.transform.localScale = new Vector3(10f, 1f, segmentLength);
+        road.transform.localPosition = new Vector3(0f, -0.55f, segmentLength / 2f);
+        road.transform.localScale = new Vector3(10f, 1f, segmentLength + 0.2f);
         road.GetComponent<Renderer>().material = roadMat;
         Destroy(road.GetComponent<Collider>());
 
@@ -291,8 +300,8 @@ public class SimpleTrackRunner : MonoBehaviour
                 GameObject line = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 line.name = "LaneDash";
                 line.transform.SetParent(segment.transform);
-                line.transform.localPosition = new Vector3(lx, 0.02f, d * 8f + 2f);
-                line.transform.localScale = new Vector3(0.12f, 0.02f, 4f);
+                line.transform.localPosition = new Vector3(lx, 0.08f, d * 8f + 2f);
+                line.transform.localScale = new Vector3(0.12f, 0.04f, 4f);
                 line.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 1f, 0.8f));
                 Destroy(line.GetComponent<Collider>());
             }
@@ -305,8 +314,8 @@ public class SimpleTrackRunner : MonoBehaviour
             crosswalk.name = "Crosswalk";
             crosswalk.transform.SetParent(segment.transform);
             float cwZ = Random.Range(5f, segmentLength - 5f);
-            crosswalk.transform.localPosition = new Vector3(0f, 0.01f, cwZ);
-            crosswalk.transform.localScale = new Vector3(8f, 0.02f, 3f);
+            crosswalk.transform.localPosition = new Vector3(0f, 0.08f, cwZ);
+            crosswalk.transform.localScale = new Vector3(8f, 0.04f, 3f);
             crosswalk.GetComponent<Renderer>().material = crosswalkMat;
             Destroy(crosswalk.GetComponent<Collider>());
         }
@@ -319,8 +328,8 @@ public class SimpleTrackRunner : MonoBehaviour
             manhole.transform.SetParent(segment.transform);
             float mhZ = Random.Range(5f, segmentLength - 5f);
             int mhLane = Random.Range(-1, 2);
-            manhole.transform.localPosition = new Vector3(mhLane * laneWidth, 0.01f, mhZ);
-            manhole.transform.localScale = new Vector3(1f, 0.01f, 1f);
+            manhole.transform.localPosition = new Vector3(mhLane * laneWidth, 0.08f, mhZ);
+            manhole.transform.localScale = new Vector3(1f, 0.04f, 1f);
             manhole.GetComponent<Renderer>().material = manholeMat;
             Destroy(manhole.GetComponent<Collider>());
         }
