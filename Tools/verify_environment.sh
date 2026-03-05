@@ -30,6 +30,7 @@ for candidate in \
     "/usr/local/bin/unity-editor" \
     "/opt/unity/Editor/Unity" \
     "/opt/Unity/Editor/Unity" \
+    "${HOME}/Unity/Hub/Editor/2022.3.62f3/Editor/Unity" \
     "${HOME}/Unity/Hub/Editor/2022.3.52f1/Editor/Unity"; do
     if [ -f "$candidate" ]; then
         UNITY_EDITOR="$candidate"

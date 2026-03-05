@@ -17,6 +17,7 @@ for candidate in \
     "/usr/local/bin/unity-editor" \
     "/opt/unity/Editor/Unity" \
     "/opt/Unity/Editor/Unity" \
+    "${HOME}/Unity/Hub/Editor/2022.3.62f3/Editor/Unity" \
     "${HOME}/Unity/Hub/Editor/2022.3.52f1/Editor/Unity" \
     "$(which unity-editor 2>/dev/null || true)"; do
     if [ -n "$candidate" ] && [ -f "$candidate" ]; then
