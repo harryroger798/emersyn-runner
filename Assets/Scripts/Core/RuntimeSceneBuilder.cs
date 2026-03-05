@@ -146,6 +146,17 @@ public class RuntimeSceneBuilder : MonoBehaviour
     private float scorePopTimer = 0f;
     private int lastDisplayedScore = 0;
 
+    // Phase 5: Score multiplier system
+    private int scoreMultiplier = 1;
+    private float multiplierTimer = 0f;
+    private float lastCoinTime = 0f;
+    private int consecutiveCoins = 0;
+    private Text multiplierText;
+
+    // Phase 5: Near-miss bonus
+    private float nearMissTimer = 0f;
+    private Text nearMissText;
+
     private Shader FindWorkingShader()
     {
         if (cachedShader != null) return cachedShader;
@@ -1242,10 +1253,39 @@ public class RuntimeSceneBuilder : MonoBehaviour
 
         playTime += Time.deltaTime;
 
-        currentSpeed = Mathf.Lerp(12f, 35f, Mathf.Clamp01(playTime / 180f));
+        // Phase 5: Smoother S-curve speed ramping (fast early, plateau mid, push late)
+        float speedT = Mathf.Clamp01(playTime / 200f);
+        float sCurve = speedT * speedT * (3f - 2f * speedT); // smoothstep
+        currentSpeed = Mathf.Lerp(13f, 38f, sCurve);
 
         distanceTraveled += currentSpeed * Time.deltaTime;
-        score = Mathf.FloorToInt(distanceTraveled);
+        score = Mathf.FloorToInt(distanceTraveled * scoreMultiplier);
+
+        // Phase 5: Multiplier decay
+        if (multiplierTimer > 0f)
+        {
+            multiplierTimer -= Time.deltaTime;
+            if (multiplierTimer <= 0f)
+            {
+                scoreMultiplier = 1;
+                consecutiveCoins = 0;
+                if (multiplierText != null) multiplierText.text = "";
+            }
+        }
+
+        // Phase 5: Near-miss text fade
+        if (nearMissTimer > 0f)
+        {
+            nearMissTimer -= Time.deltaTime;
+            if (nearMissText != null)
+            {
+                Color c = nearMissText.color;
+                c.a = Mathf.Clamp01(nearMissTimer / 0.5f);
+                nearMissText.color = c;
+                nearMissText.transform.localPosition += Vector3.up * Time.deltaTime * 60f;
+                if (nearMissTimer <= 0f) nearMissText.text = "";
+            }
+        }
 
         if (score != lastDisplayedScore)
         {
@@ -1386,8 +1426,13 @@ public class RuntimeSceneBuilder : MonoBehaviour
 
         Vector3 pos = player.transform.position;
 
-        float laneChangeSpeed = 15f;
-        pos.x = Mathf.Lerp(pos.x, targetX, Time.deltaTime * laneChangeSpeed);
+        // Phase 5: Snappier lane changes with ease-out curve
+        float laneChangeSpeed = 22f;
+        float laneDist = Mathf.Abs(targetX - pos.x);
+        float laneT = laneDist > 0.01f ? Mathf.Clamp01(Time.deltaTime * laneChangeSpeed) : 1f;
+        // Ease-out: faster start, smooth finish
+        float easeOut = 1f - (1f - laneT) * (1f - laneT);
+        pos.x = Mathf.Lerp(pos.x, targetX, easeOut);
 
         if (isJumping)
         {
@@ -1505,8 +1550,15 @@ public class RuntimeSceneBuilder : MonoBehaviour
         float targetFOV = Mathf.Lerp(60f, 75f, Mathf.Clamp01((currentSpeed - 12f) / 23f));
         mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, targetFOV, Time.deltaTime * 3f);
 
-        Vector3 targetCamPos = player.transform.position + baseCameraOffset;
-        mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, targetCamPos, Time.deltaTime * 6f);
+        // Phase 5: Smoother camera with speed-based distance and look-ahead
+        float speedFactor = Mathf.Clamp01((currentSpeed - 13f) / 25f);
+        Vector3 dynamicOffset = baseCameraOffset + new Vector3(0f, speedFactor * 2f, -speedFactor * 3f);
+        Vector3 targetCamPos = player.transform.position + dynamicOffset;
+        // Smooth follow with slightly faster horizontal tracking
+        float smoothX = Mathf.Lerp(mainCamera.transform.position.x, targetCamPos.x, Time.deltaTime * 8f);
+        float smoothY = Mathf.Lerp(mainCamera.transform.position.y, targetCamPos.y, Time.deltaTime * 5f);
+        float smoothZ = Mathf.Lerp(mainCamera.transform.position.z, targetCamPos.z, Time.deltaTime * 6f);
+        mainCamera.transform.position = new Vector3(smoothX, smoothY, smoothZ);
 
         if (cameraShakeTimer > 0f)
         {
@@ -1519,8 +1571,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
             );
         }
 
-        // Phase 3: Curved-world camera tilt — slight downward angle for Subway Surfers feel
-        Vector3 lookTarget = player.transform.position + Vector3.forward * 12f + Vector3.up * 1.5f;
+        // Phase 5: Dynamic look-ahead — camera looks further ahead at higher speeds
+        float lookAhead = Mathf.Lerp(10f, 18f, speedFactor);
+        Vector3 lookTarget = player.transform.position + Vector3.forward * lookAhead + Vector3.up * 1.5f;
         mainCamera.transform.LookAt(lookTarget);
 
         // Phase 3: Subtle camera rotation based on lane for dynamic feel
@@ -1571,6 +1624,25 @@ public class RuntimeSceneBuilder : MonoBehaviour
 
                 if (coinCollectPS != null) coinCollectPS.Emit(8);
                 PlaySFX("sfx_coin");
+
+                // Phase 5: Consecutive coin multiplier
+                float timeSinceLastCoin = Time.time - lastCoinTime;
+                lastCoinTime = Time.time;
+                if (timeSinceLastCoin < 1.5f)
+                {
+                    consecutiveCoins++;
+                    if (consecutiveCoins >= 3)
+                    {
+                        scoreMultiplier = Mathf.Min(consecutiveCoins / 3 + 1, 5);
+                        multiplierTimer = 3f;
+                        if (multiplierText != null)
+                            multiplierText.text = "x" + scoreMultiplier;
+                    }
+                }
+                else
+                {
+                    consecutiveCoins = 1;
+                }
 
                 distanceTraveled += 5f;
             }

@@ -681,18 +681,89 @@ public class SimpleTrackRunner : MonoBehaviour
 
     private void PlaceObstacles(float segStartZ)
     {
-        int count = Random.Range(1, 4);
-        float spacing = segmentLength / (count + 1);
+        // Phase 5: Pattern-based obstacle placement for more interesting gameplay
+        int pattern = Random.Range(0, 6);
+        float baseZ = segStartZ + 8f;
 
-        for (int i = 0; i < count; i++)
+        switch (pattern)
         {
-            float z = segStartZ + spacing * (i + 1);
-            int lane = Random.Range(-1, 2);
-            int obstacleType = Random.Range(0, 12);
-
-            GameObject obs = CreateObstacle(obstacleType);
-            obs.transform.position = new Vector3(lane * laneWidth, 0f, z);
-            activeObstacles.Add(obs);
+            case 0: // Single obstacle — easy
+            {
+                int lane = Random.Range(-1, 2);
+                int type = Random.Range(0, 12);
+                GameObject obs = CreateObstacle(type);
+                obs.transform.position = new Vector3(lane * laneWidth, 0f, baseZ);
+                activeObstacles.Add(obs);
+                break;
+            }
+            case 1: // Two-lane block — forces player to specific lane
+            {
+                int safeLane = Random.Range(-1, 2);
+                int type = Random.Range(0, 5);
+                for (int lane = -1; lane <= 1; lane++)
+                {
+                    if (lane == safeLane) continue;
+                    GameObject obs = CreateObstacle(type);
+                    obs.transform.position = new Vector3(lane * laneWidth, 0f, baseZ);
+                    activeObstacles.Add(obs);
+                }
+                break;
+            }
+            case 2: // Staggered — obstacles in sequence forcing lane switches
+            {
+                int lane1 = Random.Range(-1, 2);
+                int lane2 = lane1;
+                while (lane2 == lane1) lane2 = Random.Range(-1, 2);
+                GameObject obs1 = CreateObstacle(Random.Range(0, 8));
+                obs1.transform.position = new Vector3(lane1 * laneWidth, 0f, baseZ);
+                activeObstacles.Add(obs1);
+                GameObject obs2 = CreateObstacle(Random.Range(0, 8));
+                obs2.transform.position = new Vector3(lane2 * laneWidth, 0f, baseZ + 12f);
+                activeObstacles.Add(obs2);
+                break;
+            }
+            case 3: // Train in one lane + barrier in another
+            {
+                int trainLane = Random.Range(-1, 2);
+                GameObject train = CreateObstacle(5); // Train
+                train.transform.position = new Vector3(trainLane * laneWidth, 0f, baseZ);
+                activeObstacles.Add(train);
+                int barrierLane = trainLane;
+                while (barrierLane == trainLane) barrierLane = Random.Range(-1, 2);
+                GameObject barrier = CreateObstacle(Random.Range(0, 4));
+                barrier.transform.position = new Vector3(barrierLane * laneWidth, 0f, baseZ + 6f);
+                activeObstacles.Add(barrier);
+                break;
+            }
+            case 4: // Jump-or-slide choice
+            {
+                int lane = Random.Range(-1, 2);
+                // Low barrier (slideable) + overhead bar nearby
+                GameObject low = CreateObstacle(0);
+                low.transform.position = new Vector3(lane * laneWidth, 0f, baseZ);
+                activeObstacles.Add(low);
+                int otherLane = lane;
+                while (otherLane == lane) otherLane = Random.Range(-1, 2);
+                GameObject over = CreateObstacle(2);
+                over.transform.position = new Vector3(otherLane * laneWidth, 0f, baseZ);
+                activeObstacles.Add(over);
+                break;
+            }
+            default: // Classic random 1-3 obstacles
+            {
+                int count = Random.Range(1, 4);
+                float spacing = segmentLength / (count + 1);
+                for (int i = 0; i < count; i++)
+                {
+                    float z = segStartZ + spacing * (i + 1);
+                    int lane = Random.Range(-1, 2);
+                    int obstacleType = Random.Range(0, 12);
+                    GameObject obs = CreateObstacle(obstacleType);
+                    obs.transform.position = new Vector3(lane * laneWidth, 0f, z);
+                    activeObstacles.Add(obs);
+                }
+                break;
+            }
         }
     }
 
