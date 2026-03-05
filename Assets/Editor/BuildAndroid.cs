@@ -51,6 +51,13 @@ public static class BuildAndroid
         PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
         PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel33;
 
+        // Force Portrait orientation (prevent upside-down/landscape)
+        PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+        PlayerSettings.allowedAutorotateToPortrait = true;
+        PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
+        PlayerSettings.allowedAutorotateToLandscapeLeft = false;
+        PlayerSettings.allowedAutorotateToLandscapeRight = false;
+
         // Set application identifier
         PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.emersynGames.emersynrunner");
         PlayerSettings.bundleVersion = "1.0.0";
