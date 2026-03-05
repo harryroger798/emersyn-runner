@@ -35,12 +35,15 @@ public class RuntimeSceneBuilder : MonoBehaviour
     private GameObject mainMenuPanel;
     private GameObject hudPanel;
     private GameObject gameOverPanel;
+    private GameObject charSelectPanel;
     private Text scoreText;
     private Text coinText;
     private Text titleText;
     private Text gameOverScoreText;
     private Text highScoreText;
     private Text speedText;
+    private Text outfitLabel;
+    private Text boardLabel;
 
     private bool gameStarted = false;
     private int score = 0;
@@ -50,6 +53,46 @@ public class RuntimeSceneBuilder : MonoBehaviour
     private float currentSpeed = 10f;
     private float playTime = 0f;
     private bool isGameOver = false;
+
+    // Character outfit selection
+    private int selectedOutfit = 0;
+    private int selectedBoard = 0;
+    private GameObject hoverboard;
+    private static readonly string[][] outfitTextures = new string[][]
+    {
+        new string[] { "tex_emersyn_shirt", "tex_emersyn_pants", "tex_emersyn_shoes" },
+        new string[] { "tex_outfit_red_hoodie", "tex_pants_grey_joggers", "tex_shoes_gold" },
+        new string[] { "tex_outfit_green_jacket", "tex_pants_camo", "tex_shoes_neon_green" },
+        new string[] { "tex_outfit_orange_vest", "tex_emersyn_pants", "tex_emersyn_shoes" },
+        new string[] { "tex_outfit_purple_sweater", "tex_pants_grey_joggers", "tex_shoes_gold" },
+        new string[] { "tex_outfit_pink_tshirt", "tex_pants_camo", "tex_shoes_neon_green" }
+    };
+    private static readonly Color[][] outfitFallbacks = new Color[][]
+    {
+        new Color[] { new Color(0.2f, 0.5f, 0.9f), new Color(0.2f, 0.2f, 0.35f), new Color(0.9f, 0.2f, 0.15f) },
+        new Color[] { new Color(0.8f, 0.15f, 0.1f), new Color(0.5f, 0.5f, 0.5f), new Color(0.85f, 0.7f, 0.1f) },
+        new Color[] { new Color(0.2f, 0.55f, 0.25f), new Color(0.4f, 0.45f, 0.3f), new Color(0.3f, 0.9f, 0.2f) },
+        new Color[] { new Color(0.95f, 0.5f, 0.1f), new Color(0.2f, 0.2f, 0.35f), new Color(0.9f, 0.2f, 0.15f) },
+        new Color[] { new Color(0.55f, 0.2f, 0.7f), new Color(0.5f, 0.5f, 0.5f), new Color(0.85f, 0.7f, 0.1f) },
+        new Color[] { new Color(0.95f, 0.4f, 0.6f), new Color(0.4f, 0.45f, 0.3f), new Color(0.3f, 0.9f, 0.2f) }
+    };
+    private static readonly string[] outfitNames = new string[]
+    {
+        "Classic Blue", "Red Hoodie", "Green Jacket", "Orange Vest", "Purple Sweater", "Pink Tee"
+    };
+    private static readonly string[] boardTextures = new string[]
+    {
+        "", "tex_board_galaxy", "tex_board_blue_flame", "tex_board_lightning", "tex_board_rainbow", "tex_board_pixel"
+    };
+    private static readonly Color[] boardFallbacks = new Color[]
+    {
+        Color.clear, new Color(0.2f, 0.1f, 0.5f), new Color(0.1f, 0.3f, 0.9f),
+        new Color(0.9f, 0.8f, 0.1f), new Color(0.9f, 0.2f, 0.3f), new Color(0.3f, 0.8f, 0.3f)
+    };
+    private static readonly string[] boardNames = new string[]
+    {
+        "No Board", "Galaxy", "Blue Flame", "Lightning", "Rainbow", "Pixel"
+    };
 
     // Player movement
     private int currentLane = 0;
@@ -216,6 +259,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         CreateSkybox();
         CreateGround();
         CreatePlayer();
+        CreateHoverboard();
         SetupAudio();
         CreateParticleSystems();
         CreateUI();
@@ -478,6 +522,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
         backpack.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.9f, 0.4f, 0.1f));
         Destroy(backpack.GetComponent<Collider>());
 
+        ApplyOutfit(selectedOutfit);
+
         CapsuleCollider col = player.AddComponent<CapsuleCollider>();
         col.center = new Vector3(0f, 0.5f, 0f);
         col.radius = 0.3f;
@@ -487,6 +533,91 @@ public class RuntimeSceneBuilder : MonoBehaviour
         Rigidbody rb = player.AddComponent<Rigidbody>();
         rb.isKinematic = true;
         rb.useGravity = false;
+    }
+
+    private void CreateHoverboard()
+    {
+        hoverboard = new GameObject("Hoverboard");
+        hoverboard.transform.SetParent(player.transform);
+        hoverboard.transform.localPosition = new Vector3(0f, -0.3f, 0f);
+
+        GameObject deck = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        deck.name = "Deck";
+        deck.transform.SetParent(hoverboard.transform);
+        deck.transform.localPosition = Vector3.zero;
+        deck.transform.localScale = new Vector3(0.5f, 0.06f, 1.2f);
+        deck.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.2f, 0.1f, 0.5f));
+        Destroy(deck.GetComponent<Collider>());
+
+        // Glow underside
+        GameObject glow = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        glow.name = "Glow";
+        glow.transform.SetParent(hoverboard.transform);
+        glow.transform.localPosition = new Vector3(0f, -0.05f, 0f);
+        glow.transform.localScale = new Vector3(0.45f, 0.02f, 1.1f);
+        Material glowMat = CreateColorMaterial(new Color(0.3f, 0.6f, 1f, 0.7f));
+        glow.GetComponent<Renderer>().material = glowMat;
+        Destroy(glow.GetComponent<Collider>());
+
+        hoverboard.SetActive(false); // Hidden by default, shown when board selected
+    }
+
+    private void ApplyOutfit(int outfitIdx)
+    {
+        if (player == null) return;
+        outfitIdx = Mathf.Clamp(outfitIdx, 0, outfitTextures.Length - 1);
+        string[] texNames = outfitTextures[outfitIdx];
+        Color[] fallbacks = outfitFallbacks[outfitIdx];
+
+        // Body/shirt
+        if (playerBody != null)
+            playerBody.GetComponent<Renderer>().material = CreateTexturedMaterial(texNames[0], fallbacks[0]);
+
+        // Arms match shirt
+        if (playerLeftArm != null)
+            playerLeftArm.GetComponent<Renderer>().material = CreateTexturedMaterial(texNames[0], fallbacks[0]);
+        if (playerRightArm != null)
+            playerRightArm.GetComponent<Renderer>().material = CreateTexturedMaterial(texNames[0], fallbacks[0]);
+
+        // Pants
+        Material pantsMat = CreateTexturedMaterial(texNames[1], fallbacks[1]);
+        if (playerLeftLeg != null)
+            playerLeftLeg.GetComponent<Renderer>().material = pantsMat;
+        if (playerRightLeg != null)
+            playerRightLeg.GetComponent<Renderer>().material = pantsMat;
+
+        // Shoes
+        Material shoesMat = CreateTexturedMaterial(texNames[2], fallbacks[2]);
+        foreach (Transform child in playerLeftLeg != null ? playerLeftLeg : player.transform)
+        {
+            if (child.name == "Shoe") child.GetComponent<Renderer>().material = shoesMat;
+        }
+        foreach (Transform child in playerRightLeg != null ? playerRightLeg : player.transform)
+        {
+            if (child.name == "Shoe") child.GetComponent<Renderer>().material = shoesMat;
+        }
+    }
+
+    private void ApplyBoard(int boardIdx)
+    {
+        if (hoverboard == null) return;
+        boardIdx = Mathf.Clamp(boardIdx, 0, boardTextures.Length - 1);
+
+        if (boardIdx == 0)
+        {
+            hoverboard.SetActive(false);
+            groundY = 0.75f;
+            return;
+        }
+
+        hoverboard.SetActive(true);
+        groundY = 1.1f; // Ride higher on board
+        Transform deck = hoverboard.transform.Find("Deck");
+        if (deck != null)
+        {
+            deck.GetComponent<Renderer>().material = CreateTexturedMaterial(
+                boardTextures[boardIdx], boardFallbacks[boardIdx]);
+        }
     }
 
     private void SetupAudio()
@@ -633,7 +764,37 @@ public class RuntimeSceneBuilder : MonoBehaviour
             new Vector2(0f, -100f), new Vector2(350f, 80f),
             new Color(0.1f, 0.75f, 0.3f), OnPlayClicked);
 
-        CreateUIText(mainMenuPanel.transform, "VersionText", "v2.0 AAA - Modal GPU Generated",
+        // Character selection buttons
+        CreateButton(mainMenuPanel.transform, "OutfitLeftBtn", "<",
+            new Vector2(-200f, -250f), new Vector2(60f, 60f),
+            new Color(0.3f, 0.3f, 0.4f), OnOutfitPrev);
+
+        outfitLabel = CreateUIText(mainMenuPanel.transform, "OutfitLabel", outfitNames[selectedOutfit],
+            new Vector2(0f, -250f), 24, Color.white, FontStyle.Bold);
+
+        CreateButton(mainMenuPanel.transform, "OutfitRightBtn", ">",
+            new Vector2(200f, -250f), new Vector2(60f, 60f),
+            new Color(0.3f, 0.3f, 0.4f), OnOutfitNext);
+
+        CreateUIText(mainMenuPanel.transform, "OutfitTitle", "OUTFIT",
+            new Vector2(0f, -210f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
+
+        // Board selection buttons
+        CreateButton(mainMenuPanel.transform, "BoardLeftBtn", "<",
+            new Vector2(-200f, -350f), new Vector2(60f, 60f),
+            new Color(0.3f, 0.3f, 0.4f), OnBoardPrev);
+
+        boardLabel = CreateUIText(mainMenuPanel.transform, "BoardLabel", boardNames[selectedBoard],
+            new Vector2(0f, -350f), 24, Color.white, FontStyle.Bold);
+
+        CreateButton(mainMenuPanel.transform, "BoardRightBtn", ">",
+            new Vector2(200f, -350f), new Vector2(60f, 60f),
+            new Color(0.3f, 0.3f, 0.4f), OnBoardNext);
+
+        CreateUIText(mainMenuPanel.transform, "BoardTitle", "HOVERBOARD",
+            new Vector2(0f, -310f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
+
+        CreateUIText(mainMenuPanel.transform, "VersionText", "v3.0 AAA - Modal GPU Generated",
             new Vector2(0f, -800f), 18, new Color(0.5f, 0.5f, 0.5f), FontStyle.Normal);
 
         hudPanel = CreatePanel(canvasObj.transform, "HUDPanel");
@@ -794,6 +955,38 @@ public class RuntimeSceneBuilder : MonoBehaviour
         ShowMainMenu();
     }
 
+    private void OnOutfitPrev()
+    {
+        PlaySFX("sfx_click");
+        selectedOutfit = (selectedOutfit - 1 + outfitNames.Length) % outfitNames.Length;
+        if (outfitLabel != null) outfitLabel.text = outfitNames[selectedOutfit];
+        ApplyOutfit(selectedOutfit);
+    }
+
+    private void OnOutfitNext()
+    {
+        PlaySFX("sfx_click");
+        selectedOutfit = (selectedOutfit + 1) % outfitNames.Length;
+        if (outfitLabel != null) outfitLabel.text = outfitNames[selectedOutfit];
+        ApplyOutfit(selectedOutfit);
+    }
+
+    private void OnBoardPrev()
+    {
+        PlaySFX("sfx_click");
+        selectedBoard = (selectedBoard - 1 + boardNames.Length) % boardNames.Length;
+        if (boardLabel != null) boardLabel.text = boardNames[selectedBoard];
+        ApplyBoard(selectedBoard);
+    }
+
+    private void OnBoardNext()
+    {
+        PlaySFX("sfx_click");
+        selectedBoard = (selectedBoard + 1) % boardNames.Length;
+        if (boardLabel != null) boardLabel.text = boardNames[selectedBoard];
+        ApplyBoard(selectedBoard);
+    }
+
     private void ShowMainMenu()
     {
         gameStarted = false;
@@ -845,6 +1038,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
         if (coinText != null) coinText.text = "0";
 
         if (trackRunner != null) trackRunner.StartTrack();
+
+        ApplyOutfit(selectedOutfit);
+        ApplyBoard(selectedBoard);
 
         Time.timeScale = 1f;
         SwitchMusic("gameplay_loop");

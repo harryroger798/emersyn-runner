@@ -33,6 +33,17 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material lampMat;
     private Material graffitiMat;
 
+    // NEW: Additional materials for AAA upgrade
+    private Material cobbleMat;
+    private Material crosswalkMat;
+    private Material manholeMat;
+    private Material[] propMats;
+    private Material dumpsterMat;
+    private Material constructionMat;
+    private Material carMat;
+    private Material busMat;
+    private Material[] trainVariantMats;
+
     private Shader litShader;
     private int segmentsSpawned = 0;
     private Dictionary<string, Texture2D> texCache = new Dictionary<string, Texture2D>();
@@ -129,7 +140,40 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_building_blue", new Color(0.35f, 0.45f, 0.7f)),
             CreateTexturedMaterial("tex_building_yellow", new Color(0.7f, 0.65f, 0.35f)),
             CreateTexturedMaterial("tex_building_grey", new Color(0.55f, 0.55f, 0.55f)),
-            CreateTexturedMaterial("tex_building_pink", new Color(0.7f, 0.45f, 0.55f))
+            CreateTexturedMaterial("tex_building_pink", new Color(0.7f, 0.45f, 0.55f)),
+            CreateTexturedMaterial("tex_building_modern_glass", new Color(0.4f, 0.55f, 0.7f)),
+            CreateTexturedMaterial("tex_building_brownstone", new Color(0.5f, 0.35f, 0.25f)),
+            CreateTexturedMaterial("tex_building_shop_front", new Color(0.6f, 0.5f, 0.4f)),
+            CreateTexturedMaterial("tex_building_neon", new Color(0.3f, 0.2f, 0.5f)),
+            CreateTexturedMaterial("tex_building_graffiti", new Color(0.5f, 0.4f, 0.45f))
+        };
+
+        cobbleMat = CreateTexturedMaterial("tex_ground_cobblestone", new Color(0.45f, 0.45f, 0.4f));
+        crosswalkMat = CreateTexturedMaterial("tex_ground_crosswalk", new Color(0.9f, 0.9f, 0.9f));
+        manholeMat = CreateTexturedMaterial("tex_ground_manhole", new Color(0.35f, 0.35f, 0.35f));
+
+        propMats = new Material[]
+        {
+            CreateTexturedMaterial("tex_prop_trashcan", new Color(0.2f, 0.5f, 0.2f)),
+            CreateTexturedMaterial("tex_prop_bench", new Color(0.45f, 0.3f, 0.15f)),
+            CreateTexturedMaterial("tex_prop_mailbox", new Color(0.2f, 0.3f, 0.7f)),
+            CreateTexturedMaterial("tex_prop_hydrant", new Color(0.8f, 0.15f, 0.1f)),
+            CreateTexturedMaterial("tex_prop_newspaper", new Color(0.7f, 0.65f, 0.1f)),
+            CreateTexturedMaterial("tex_prop_bollard", new Color(0.6f, 0.6f, 0.6f)),
+            CreateTexturedMaterial("tex_prop_planter", new Color(0.4f, 0.55f, 0.3f)),
+            CreateTexturedMaterial("tex_prop_streetlight", new Color(0.3f, 0.3f, 0.35f))
+        };
+
+        dumpsterMat = CreateTexturedMaterial("tex_obstacle_dumpster", new Color(0.2f, 0.45f, 0.2f));
+        constructionMat = CreateTexturedMaterial("tex_obstacle_construction", new Color(0.9f, 0.5f, 0.1f));
+        carMat = CreateTexturedMaterial("tex_obstacle_car_side", new Color(0.8f, 0.7f, 0.1f));
+        busMat = CreateTexturedMaterial("tex_obstacle_bus", new Color(0.3f, 0.4f, 0.7f));
+
+        trainVariantMats = new Material[]
+        {
+            trainMat,
+            CreateTexturedMaterial("tex_train_graffiti_2", new Color(0.4f, 0.3f, 0.5f)),
+            CreateTexturedMaterial("tex_train_clean", new Color(0.7f, 0.7f, 0.75f))
         };
     }
 
@@ -254,18 +298,45 @@ public class SimpleTrackRunner : MonoBehaviour
             }
         }
 
-        // Buildings with textures
+        // Crosswalk patches
+        if (Random.value < 0.3f)
+        {
+            GameObject crosswalk = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            crosswalk.name = "Crosswalk";
+            crosswalk.transform.SetParent(segment.transform);
+            float cwZ = Random.Range(5f, segmentLength - 5f);
+            crosswalk.transform.localPosition = new Vector3(0f, 0.01f, cwZ);
+            crosswalk.transform.localScale = new Vector3(8f, 0.02f, 3f);
+            crosswalk.GetComponent<Renderer>().material = crosswalkMat;
+            Destroy(crosswalk.GetComponent<Collider>());
+        }
+
+        // Manhole covers
+        if (Random.value < 0.2f)
+        {
+            GameObject manhole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            manhole.name = "Manhole";
+            manhole.transform.SetParent(segment.transform);
+            float mhZ = Random.Range(5f, segmentLength - 5f);
+            int mhLane = Random.Range(-1, 2);
+            manhole.transform.localPosition = new Vector3(mhLane * laneWidth, 0.01f, mhZ);
+            manhole.transform.localScale = new Vector3(1f, 0.01f, 1f);
+            manhole.GetComponent<Renderer>().material = manholeMat;
+            Destroy(manhole.GetComponent<Collider>());
+        }
+
+        // Buildings with textures — 10 variants, denser
         for (int side = -1; side <= 1; side += 2)
         {
-            int buildingCount = Random.Range(1, 4);
+            int buildingCount = Random.Range(2, 5);
             float zOffset = 0f;
             for (int b = 0; b < buildingCount; b++)
             {
                 GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 building.name = "Building";
                 building.transform.SetParent(segment.transform);
-                float height = Random.Range(6f, 18f);
-                float depth = Random.Range(8f, segmentLength / buildingCount);
+                float height = Random.Range(6f, 22f);
+                float depth = Random.Range(6f, segmentLength / buildingCount);
                 building.transform.localPosition = new Vector3(
                     side * (7f + Random.Range(0f, 2f)),
                     height / 2f,
@@ -277,45 +348,65 @@ public class SimpleTrackRunner : MonoBehaviour
                 building.GetComponent<Renderer>().material = buildingMats[Random.Range(0, buildingMats.Length)];
                 Destroy(building.GetComponent<Collider>());
 
-                // Windows on buildings
-                if (height > 8f)
+                // Windows on buildings — denser grid
+                if (height > 7f)
                 {
-                    for (int w = 0; w < Mathf.Min(3, (int)(height / 4f)); w++)
+                    int windowRows = Mathf.Min(5, (int)(height / 3f));
+                    int windowCols = Random.Range(2, 4);
+                    for (int wr = 0; wr < windowRows; wr++)
                     {
-                        GameObject window = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        window.name = "Window";
-                        window.transform.SetParent(building.transform);
-                        window.transform.localPosition = new Vector3(
-                            -side * 0.51f,
-                            -0.3f + w * 0.2f,
-                            Random.Range(-0.3f, 0.3f)
-                        );
-                        window.transform.localScale = new Vector3(0.02f, 0.12f, 0.08f);
-                        window.GetComponent<Renderer>().material = CreateColorMaterial(
-                            new Color(0.9f, 0.95f, 1f, 0.7f));
-                        Destroy(window.GetComponent<Collider>());
+                        for (int wc = 0; wc < windowCols; wc++)
+                        {
+                            GameObject window = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                            window.name = "Window";
+                            window.transform.SetParent(building.transform);
+                            window.transform.localPosition = new Vector3(
+                                -side * 0.51f,
+                                -0.35f + wr * 0.18f,
+                                -0.3f + wc * 0.25f
+                            );
+                            window.transform.localScale = new Vector3(0.02f, 0.1f, 0.08f);
+                            Color winColor = Random.value < 0.6f
+                                ? new Color(0.95f, 0.9f, 0.7f, 0.9f)
+                                : new Color(0.2f, 0.25f, 0.35f, 0.8f);
+                            window.GetComponent<Renderer>().material = CreateColorMaterial(winColor);
+                            Destroy(window.GetComponent<Collider>());
+                        }
                     }
+                }
+
+                // Awning on ground floor shops
+                if (height < 10f && Random.value < 0.3f)
+                {
+                    GameObject awning = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    awning.name = "Awning";
+                    awning.transform.SetParent(building.transform);
+                    awning.transform.localPosition = new Vector3(-side * 0.55f, -0.35f, 0f);
+                    awning.transform.localScale = new Vector3(0.3f, 0.02f, 0.4f);
+                    Color awningColor = new Color(Random.Range(0.5f, 1f), Random.Range(0.2f, 0.6f), Random.Range(0.1f, 0.4f));
+                    awning.GetComponent<Renderer>().material = CreateColorMaterial(awningColor);
+                    Destroy(awning.GetComponent<Collider>());
                 }
 
                 zOffset += depth;
             }
         }
 
-        // Street props
+        // Street props — dense variety
         for (int side = -1; side <= 1; side += 2)
         {
             // Street lamps
-            if (Random.value < 0.5f)
+            if (Random.value < 0.65f)
             {
+                float lampZ = Random.Range(5f, 35f);
                 GameObject lamp = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 lamp.name = "StreetLamp";
                 lamp.transform.SetParent(segment.transform);
-                lamp.transform.localPosition = new Vector3(side * 5f, 2f, Random.Range(5f, 35f));
-                lamp.transform.localScale = new Vector3(0.15f, 2f, 0.15f);
-                lamp.GetComponent<Renderer>().material = lampMat;
+                lamp.transform.localPosition = new Vector3(side * 4.8f, 2f, lampZ);
+                lamp.transform.localScale = new Vector3(0.12f, 2f, 0.12f);
+                lamp.GetComponent<Renderer>().material = propMats.Length > 7 ? propMats[7] : lampMat;
                 Destroy(lamp.GetComponent<Collider>());
 
-                // Lamp head
                 GameObject lhead = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 lhead.transform.SetParent(lamp.transform);
                 lhead.transform.localPosition = new Vector3(0f, 0.6f, 0f);
@@ -325,7 +416,7 @@ public class SimpleTrackRunner : MonoBehaviour
             }
 
             // Fences
-            if (Random.value < 0.3f)
+            if (Random.value < 0.25f)
             {
                 GameObject fence = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 fence.name = "Fence";
@@ -334,6 +425,97 @@ public class SimpleTrackRunner : MonoBehaviour
                 fence.transform.localScale = new Vector3(0.1f, 1f, segmentLength * 0.8f);
                 fence.GetComponent<Renderer>().material = fenceMat;
                 Destroy(fence.GetComponent<Collider>());
+            }
+
+            // Trash cans
+            if (Random.value < 0.4f)
+            {
+                GameObject trashcan = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                trashcan.name = "TrashCan";
+                trashcan.transform.SetParent(segment.transform);
+                float tcZ = Random.Range(3f, segmentLength - 3f);
+                trashcan.transform.localPosition = new Vector3(side * 4.6f, 0.4f, tcZ);
+                trashcan.transform.localScale = new Vector3(0.35f, 0.4f, 0.35f);
+                trashcan.GetComponent<Renderer>().material = propMats[0];
+                Destroy(trashcan.GetComponent<Collider>());
+            }
+
+            // Benches
+            if (Random.value < 0.25f)
+            {
+                GameObject bench = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                bench.name = "Bench";
+                bench.transform.SetParent(segment.transform);
+                float bZ = Random.Range(5f, segmentLength - 5f);
+                bench.transform.localPosition = new Vector3(side * 4.7f, 0.3f, bZ);
+                bench.transform.localScale = new Vector3(0.4f, 0.35f, 1.2f);
+                bench.GetComponent<Renderer>().material = propMats[1];
+                Destroy(bench.GetComponent<Collider>());
+            }
+
+            // Mailboxes
+            if (Random.value < 0.15f)
+            {
+                GameObject mailbox = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                mailbox.name = "Mailbox";
+                mailbox.transform.SetParent(segment.transform);
+                float mbZ = Random.Range(5f, segmentLength - 5f);
+                mailbox.transform.localPosition = new Vector3(side * 4.5f, 0.55f, mbZ);
+                mailbox.transform.localScale = new Vector3(0.35f, 0.65f, 0.3f);
+                mailbox.GetComponent<Renderer>().material = propMats[2];
+                Destroy(mailbox.GetComponent<Collider>());
+            }
+
+            // Fire hydrants
+            if (Random.value < 0.2f)
+            {
+                GameObject hydrant = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                hydrant.name = "Hydrant";
+                hydrant.transform.SetParent(segment.transform);
+                float hyZ = Random.Range(3f, segmentLength - 3f);
+                hydrant.transform.localPosition = new Vector3(side * 4.4f, 0.25f, hyZ);
+                hydrant.transform.localScale = new Vector3(0.2f, 0.25f, 0.2f);
+                hydrant.GetComponent<Renderer>().material = propMats[3];
+                Destroy(hydrant.GetComponent<Collider>());
+            }
+
+            // Bollards
+            if (Random.value < 0.3f)
+            {
+                int bollardCount = Random.Range(2, 5);
+                float bollardStartZ = Random.Range(3f, segmentLength - 10f);
+                for (int bi = 0; bi < bollardCount; bi++)
+                {
+                    GameObject bollard = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    bollard.name = "Bollard";
+                    bollard.transform.SetParent(segment.transform);
+                    bollard.transform.localPosition = new Vector3(side * 4.3f, 0.35f, bollardStartZ + bi * 2f);
+                    bollard.transform.localScale = new Vector3(0.12f, 0.35f, 0.12f);
+                    bollard.GetComponent<Renderer>().material = propMats[5];
+                    Destroy(bollard.GetComponent<Collider>());
+                }
+            }
+
+            // Planters with flowers
+            if (Random.value < 0.2f)
+            {
+                GameObject planter = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                planter.name = "Planter";
+                planter.transform.SetParent(segment.transform);
+                float plZ = Random.Range(5f, segmentLength - 5f);
+                planter.transform.localPosition = new Vector3(side * 4.6f, 0.3f, plZ);
+                planter.transform.localScale = new Vector3(0.5f, 0.35f, 0.5f);
+                planter.GetComponent<Renderer>().material = propMats[6];
+                Destroy(planter.GetComponent<Collider>());
+
+                GameObject flowers = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                flowers.name = "Flowers";
+                flowers.transform.SetParent(planter.transform);
+                flowers.transform.localPosition = new Vector3(0f, 0.7f, 0f);
+                flowers.transform.localScale = new Vector3(0.8f, 0.5f, 0.8f);
+                Color flowerColor = new Color(Random.Range(0.6f, 1f), Random.Range(0.2f, 0.8f), Random.Range(0.2f, 0.6f));
+                flowers.GetComponent<Renderer>().material = CreateColorMaterial(flowerColor);
+                Destroy(flowers.GetComponent<Collider>());
             }
         }
 
@@ -370,7 +552,7 @@ public class SimpleTrackRunner : MonoBehaviour
         {
             float z = segStartZ + spacing * (i + 1);
             int lane = Random.Range(-1, 2);
-            int obstacleType = Random.Range(0, 8);
+            int obstacleType = Random.Range(0, 12);
 
             GameObject obs = CreateObstacle(obstacleType);
             obs.transform.position = new Vector3(lane * laneWidth, 0f, z);
@@ -431,18 +613,18 @@ public class SimpleTrackRunner : MonoBehaviour
                 obs.GetComponent<Renderer>().material = barrierMat;
                 break;
 
-            case 5: // Train
+            case 5: // Train with variant textures
                 obs = new GameObject("Train");
+                Material selectedTrainMat = trainVariantMats[Random.Range(0, trainVariantMats.Length)];
                 for (int c = 0; c < 3; c++)
                 {
                     GameObject car = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     car.transform.SetParent(obs.transform);
                     car.transform.localPosition = new Vector3(0f, 1.2f, c * 2.2f);
                     car.transform.localScale = new Vector3(1.8f, 2.2f, 2f);
-                    car.GetComponent<Renderer>().material = trainMat;
+                    car.GetComponent<Renderer>().material = selectedTrainMat;
                     Destroy(car.GetComponent<Collider>());
                 }
-                // Train roof
                 GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 roof.transform.SetParent(obs.transform);
                 roof.transform.localPosition = new Vector3(0f, 2.4f, 2.2f);
@@ -458,7 +640,7 @@ public class SimpleTrackRunner : MonoBehaviour
                 obs.GetComponent<Renderer>().material = coneMat;
                 break;
 
-            default: // Staggered combo
+            case 7: // Staggered combo
                 obs = new GameObject("Staggered");
                 for (int s = 0; s < 2; s++)
                 {
@@ -468,6 +650,80 @@ public class SimpleTrackRunner : MonoBehaviour
                     piece.transform.localScale = new Vector3(1f, 1.5f, 0.5f);
                     piece.GetComponent<Renderer>().material = barrierMat;
                     Destroy(piece.GetComponent<Collider>());
+                }
+                break;
+
+            case 8: // Dumpster
+                obs = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                obs.transform.localScale = new Vector3(1.8f, 1.4f, 1.2f);
+                obs.transform.position += Vector3.up * 0.7f;
+                obs.GetComponent<Renderer>().material = dumpsterMat;
+                break;
+
+            case 9: // Construction barrier with cones
+                obs = new GameObject("Construction");
+                GameObject cBarrier = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                cBarrier.transform.SetParent(obs.transform);
+                cBarrier.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                cBarrier.transform.localScale = new Vector3(2.5f, 1.2f, 0.3f);
+                cBarrier.GetComponent<Renderer>().material = constructionMat;
+                Destroy(cBarrier.GetComponent<Collider>());
+                for (int cs = -1; cs <= 1; cs += 2)
+                {
+                    GameObject cone2 = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    cone2.transform.SetParent(obs.transform);
+                    cone2.transform.localPosition = new Vector3(cs * 1.4f, 0.4f, 0f);
+                    cone2.transform.localScale = new Vector3(0.3f, 0.4f, 0.3f);
+                    cone2.GetComponent<Renderer>().material = coneMat;
+                    Destroy(cone2.GetComponent<Collider>());
+                }
+                break;
+
+            case 10: // Parked car
+                obs = new GameObject("Car");
+                GameObject carBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                carBody.transform.SetParent(obs.transform);
+                carBody.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                carBody.transform.localScale = new Vector3(1.6f, 1.0f, 3.0f);
+                carBody.GetComponent<Renderer>().material = carMat;
+                Destroy(carBody.GetComponent<Collider>());
+                GameObject carRoof = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                carRoof.transform.SetParent(obs.transform);
+                carRoof.transform.localPosition = new Vector3(0f, 1.3f, 0.2f);
+                carRoof.transform.localScale = new Vector3(1.4f, 0.5f, 1.5f);
+                carRoof.GetComponent<Renderer>().material = carMat;
+                Destroy(carRoof.GetComponent<Collider>());
+                for (int wx = -1; wx <= 1; wx += 2)
+                {
+                    for (int wz = -1; wz <= 1; wz += 2)
+                    {
+                        GameObject wheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                        wheel.transform.SetParent(obs.transform);
+                        wheel.transform.localPosition = new Vector3(wx * 0.75f, 0.2f, wz * 1.0f);
+                        wheel.transform.localScale = new Vector3(0.35f, 0.1f, 0.35f);
+                        wheel.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+                        wheel.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.15f, 0.15f, 0.15f));
+                        Destroy(wheel.GetComponent<Collider>());
+                    }
+                }
+                break;
+
+            default: // Bus obstacle
+                obs = new GameObject("Bus");
+                GameObject busBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                busBody.transform.SetParent(obs.transform);
+                busBody.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+                busBody.transform.localScale = new Vector3(2.0f, 2.2f, 5.0f);
+                busBody.GetComponent<Renderer>().material = busMat;
+                Destroy(busBody.GetComponent<Collider>());
+                for (int bw = 0; bw < 4; bw++)
+                {
+                    GameObject busWin = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    busWin.transform.SetParent(obs.transform);
+                    busWin.transform.localPosition = new Vector3(1.01f, 1.6f, -1.5f + bw * 1.0f);
+                    busWin.transform.localScale = new Vector3(0.02f, 0.6f, 0.6f);
+                    busWin.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.7f, 0.85f, 1f, 0.8f));
+                    Destroy(busWin.GetComponent<Collider>());
                 }
                 break;
         }
@@ -497,12 +753,12 @@ public class SimpleTrackRunner : MonoBehaviour
             activeCoins.Add(coin);
         }
 
-        if (Random.value < 0.4f)
+        if (Random.value < 0.5f)
         {
             int lane2 = Random.Range(-1, 2);
             while (lane2 == lane) lane2 = Random.Range(-1, 2);
             float startZ2 = segStartZ + segmentLength * 0.5f;
-            int count2 = Random.Range(2, 5);
+            int count2 = Random.Range(2, 6);
             for (int i = 0; i < count2; i++)
             {
                 float z = startZ2 + i * coinSpacing;
@@ -511,6 +767,24 @@ public class SimpleTrackRunner : MonoBehaviour
                 GameObject coin = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 coin.name = "Coin";
                 coin.transform.position = new Vector3(lane2 * laneWidth, 1.2f, z);
+                coin.transform.localScale = new Vector3(0.6f, 0.06f, 0.6f);
+                coin.GetComponent<Renderer>().material = coinMat;
+                Destroy(coin.GetComponent<Collider>());
+                activeCoins.Add(coin);
+            }
+        }
+
+        // Elevated coins (jump to collect)
+        if (Random.value < 0.25f)
+        {
+            int elevLane = Random.Range(-1, 2);
+            float elevZ = segStartZ + Random.Range(10f, segmentLength - 10f);
+            int elevCount = Random.Range(3, 6);
+            for (int i = 0; i < elevCount; i++)
+            {
+                GameObject coin = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                coin.name = "Coin";
+                coin.transform.position = new Vector3(elevLane * laneWidth, 3.5f, elevZ + i * 2.5f);
                 coin.transform.localScale = new Vector3(0.6f, 0.06f, 0.6f);
                 coin.GetComponent<Renderer>().material = coinMat;
                 Destroy(coin.GetComponent<Collider>());
