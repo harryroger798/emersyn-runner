@@ -344,19 +344,32 @@ public class RuntimeSceneBuilder : MonoBehaviour
             mainCamera.backgroundColor = new Color(0.4f, 0.7f, 0.95f);
         }
 
-        for (int i = 0; i < 12; i++)
+        // Phase 4: Improved clouds with better shapes and slight color variation
+        for (int i = 0; i < 15; i++)
         {
-            GameObject cloud = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            cloud.name = "Cloud";
-            float x = Random.Range(-80f, 80f);
-            float y = Random.Range(25f, 50f);
-            float z = Random.Range(60f, 180f);
-            cloud.transform.position = new Vector3(x, y, z);
-            float scaleX = Random.Range(15f, 35f);
-            float scaleY = Random.Range(3f, 8f);
-            cloud.transform.localScale = new Vector3(scaleX, scaleY, Random.Range(8f, 15f));
-            cloud.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 1f, 1f, 0.85f));
-            Destroy(cloud.GetComponent<Collider>());
+            GameObject cloudGroup = new GameObject("CloudGroup_" + i);
+            float cx = Random.Range(-100f, 100f);
+            float cy = Random.Range(28f, 55f);
+            float cz = Random.Range(40f, 200f);
+            cloudGroup.transform.position = new Vector3(cx, cy, cz);
+
+            // Main cloud body
+            int puffs = Random.Range(2, 5);
+            float warmth = Random.Range(0f, 0.04f);
+            Color cloudColor = new Color(1f, 1f - warmth, 1f - warmth * 2f, 0.9f);
+            for (int p = 0; p < puffs; p++)
+            {
+                GameObject puff = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                puff.name = "CloudPuff";
+                puff.transform.SetParent(cloudGroup.transform);
+                puff.transform.localPosition = new Vector3(
+                    Random.Range(-6f, 6f), Random.Range(-1f, 2f), Random.Range(-3f, 3f));
+                float sx = Random.Range(8f, 20f);
+                float sy = Random.Range(3f, 7f);
+                puff.transform.localScale = new Vector3(sx, sy, Random.Range(6f, 12f));
+                puff.GetComponent<Renderer>().material = CreateColorMaterial(cloudColor);
+                Destroy(puff.GetComponent<Collider>());
+            }
         }
     }
 
@@ -407,7 +420,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
             grass.transform.position = new Vector3(side * 15f, -0.6f, 100f);
             grass.transform.localScale = new Vector3(18f, 0.5f, 400f);
             grass.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_grass",
-                new Color(0.3f, 0.7f, 0.2f));
+                new Color(0.35f, 0.55f, 0.25f));
             Destroy(grass.GetComponent<Collider>());
         }
     }
@@ -728,18 +741,19 @@ public class RuntimeSceneBuilder : MonoBehaviour
         ParticleSystemRenderer speedRend = speedObj.GetComponent<ParticleSystemRenderer>();
         speedRend.material = CreateColorMaterial(Color.white);
 
-        // Phase 3: Enhanced dust particles
+        // Phase 4: Improved dust particles — smaller, softer, more realistic
         GameObject dustObj = new GameObject("DustParticles");
         dustObj.transform.SetParent(player.transform);
-        dustObj.transform.localPosition = new Vector3(0f, 0f, -0.5f);
+        dustObj.transform.localPosition = new Vector3(0f, 0.05f, -0.5f);
         dustPS = dustObj.AddComponent<ParticleSystem>();
         var dustMain = dustPS.main;
-        dustMain.startSpeed = 3f;
-        dustMain.startLifetime = 0.6f;
-        dustMain.startSize = 0.4f;
-        dustMain.startColor = new Color(0.7f, 0.65f, 0.5f, 0.6f);
-        dustMain.maxParticles = 30;
-        dustMain.gravityModifier = -0.3f;
+        dustMain.startSpeed = 2.5f;
+        dustMain.startLifetime = 0.4f;
+        dustMain.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.2f);
+        dustMain.startColor = new Color(0.65f, 0.6f, 0.5f, 0.35f);
+        dustMain.maxParticles = 25;
+        dustMain.gravityModifier = -0.2f;
+        dustMain.simulationSpace = ParticleSystemSimulationSpace.World;
         var dustEmission = dustPS.emission;
         dustEmission.rateOverTime = 0f;
         var dustShape = dustPS.shape;

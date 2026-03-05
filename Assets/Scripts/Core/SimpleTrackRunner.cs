@@ -142,7 +142,7 @@ public class SimpleTrackRunner : MonoBehaviour
 
         roadMat = CreateTexturedMaterialTiled("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         sidewalkMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
-        grassMat = CreateTexturedMaterial("tex_grass", new Color(0.3f, 0.7f, 0.2f));
+        grassMat = CreateTexturedMaterial("tex_grass", new Color(0.35f, 0.55f, 0.25f));
         barrierMat = CreateTexturedMaterial("tex_barrier_red", new Color(0.9f, 0.2f, 0.15f));
         trainMat = CreateTexturedMaterial("tex_train_side", new Color(0.3f, 0.3f, 0.7f));
         coneMat = CreateTexturedMaterial("tex_cone_orange", new Color(1f, 0.5f, 0f));
@@ -294,6 +294,9 @@ public class SimpleTrackRunner : MonoBehaviour
         {
             SpawnSegment(false);
         }
+
+        // Phase 4: Apply curved-world effect every frame so segments bend as they move
+        UpdateCurvedWorld();
     }
 
     private void SpawnSegment(bool safe)
@@ -608,6 +611,18 @@ public class SimpleTrackRunner : MonoBehaviour
             Destroy(grass.GetComponent<Collider>());
         }
 
+        // Phase 4: Curb/gutter detail between sidewalk and road
+        for (int side = -1; side <= 1; side += 2)
+        {
+            GameObject curb = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            curb.name = "Curb";
+            curb.transform.SetParent(segment.transform);
+            curb.transform.localPosition = new Vector3(side * 4.7f, -0.15f, segmentLength / 2f);
+            curb.transform.localScale = new Vector3(0.15f, 0.3f, segmentLength);
+            curb.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.55f, 0.55f, 0.5f));
+            Destroy(curb.GetComponent<Collider>());
+        }
+
         // Phase 3: Tunnel sections (occasional)
         if (segmentsSpawned > 3 && Random.value < 0.12f && tunnelMat != null)
         {
@@ -914,9 +929,10 @@ public class SimpleTrackRunner : MonoBehaviour
         }
     }
 
-    // Phase 3: Curved-world effect — bends distant segments downward like Subway Surfers horizon
+    // Phase 4: Curved-world effect — bends distant segments downward like Subway Surfers horizon
     private void ApplyCurvedWorld(GameObject segment)
     {
+        // Now handled by UpdateCurvedWorld() per-frame, but still apply initial curve at spawn
         if (segment == null) return;
         float distZ = segment.transform.position.z;
         if (distZ > 20f)
@@ -951,17 +967,36 @@ public class SimpleTrackRunner : MonoBehaviour
             activeSegments[i].transform.position = pos;
         }
 
-        // Also curve obstacles and coins
+        // Phase 4: Also curve obstacles and coins for consistent visual
         for (int i = 0; i < activeObstacles.Count; i++)
         {
             if (activeObstacles[i] == null) continue;
             Vector3 pos = activeObstacles[i].transform.position;
             float distZ = pos.z;
+            float baseY = pos.y;
+            // Only adjust Y for far obstacles, keeping their height offset
             if (distZ > 20f)
             {
                 float drop = curvedWorldIntensity * (distZ - 20f) * (distZ - 20f);
-                // Obstacles are at varying Y heights, preserve their base offset
-                // We only adjust the curve component
+                // Find the nearest segment's expected Y and offset accordingly
+                float segY = -drop;
+                // We store obstacles at ground-relative heights, so just apply the curve
+                pos.y = baseY - drop * 0.3f; // partial curve for obstacles (less aggressive)
+                activeObstacles[i].transform.position = pos;
+            }
+        }
+
+        // Phase 4: Curve coins too
+        for (int i = 0; i < activeCoins.Count; i++)
+        {
+            if (activeCoins[i] == null) continue;
+            Vector3 pos = activeCoins[i].transform.position;
+            float distZ = pos.z;
+            if (distZ > 20f)
+            {
+                float drop = curvedWorldIntensity * (distZ - 20f) * (distZ - 20f);
+                pos.y -= drop * 0.3f * Time.deltaTime * speed * 0.1f; // gradual curve
+                activeCoins[i].transform.position = pos;
             }
         }
     }
