@@ -357,15 +357,17 @@ public class RuntimeSceneBuilder : MonoBehaviour
             mainCamera.backgroundColor = new Color(0.4f, 0.7f, 0.95f);
         }
 
-        // Phase 7: Sky gradient backdrop — pushed far back, camera-facing, subtle blend
-        Texture2D skyTex = LoadTexture("tex_sky_gradient");
+        // Phase 8: Sky gradient backdrop — use blue gradient from Modal, fallback to Phase 6
+        Texture2D skyTex = LoadTexture("tex_sky_blue_gradient");
+        if (skyTex == null) skyTex = LoadTexture("tex_sky_gradient");
         if (skyTex != null)
         {
             GameObject skyQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             skyQuad.name = "SkyBackdrop";
             skyQuad.transform.position = new Vector3(0f, 60f, 280f);
             skyQuad.transform.localScale = new Vector3(800f, 300f, 1f);
-            Material skyMat = CreateTexturedMaterial("tex_sky_gradient", new Color(0.5f, 0.75f, 0.95f));
+            string skyTexName = LoadTexture("tex_sky_blue_gradient") != null ? "tex_sky_blue_gradient" : "tex_sky_gradient";
+            Material skyMat = CreateTexturedMaterial(skyTexName, new Color(0.5f, 0.75f, 0.95f));
             skyQuad.GetComponent<Renderer>().material = skyMat;
             Destroy(skyQuad.GetComponent<Collider>());
         }
@@ -408,8 +410,10 @@ public class RuntimeSceneBuilder : MonoBehaviour
         road.transform.SetParent(ground.transform);
         road.transform.position = new Vector3(0f, -0.5f, 100f);
         road.transform.localScale = new Vector3(10f, 1f, 400f);
-        road.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_road_asphalt",
-            new Color(0.25f, 0.25f, 0.3f));
+        // Phase 8: Use HD road asphalt from Modal, fallback to original
+        Material groundRoadMat = CreateTexturedMaterial("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f));
+        if (groundRoadMat.mainTexture == null) groundRoadMat = CreateTexturedMaterial("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f));
+        road.GetComponent<Renderer>().material = groundRoadMat;
         Destroy(road.GetComponent<Collider>());
 
         for (int side = -1; side <= 1; side += 2)
@@ -419,8 +423,10 @@ public class RuntimeSceneBuilder : MonoBehaviour
             sidewalk.transform.SetParent(ground.transform);
             sidewalk.transform.position = new Vector3(side * 5.8f, -0.3f, 100f);
             sidewalk.transform.localScale = new Vector3(2f, 0.6f, 400f);
-            sidewalk.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_road_sidewalk",
-                new Color(0.6f, 0.6f, 0.55f));
+            // Phase 8: Use stone sidewalk from Modal, fallback to original
+            Material swMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.6f, 0.6f, 0.55f));
+            if (swMat.mainTexture == null) swMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
+            sidewalk.GetComponent<Renderer>().material = swMat;
             Destroy(sidewalk.GetComponent<Collider>());
         }
 

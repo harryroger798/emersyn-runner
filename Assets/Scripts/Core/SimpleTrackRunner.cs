@@ -52,6 +52,10 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material rooftopMat;
     private Material tunnelMat;
 
+    // Phase 8: Road curb and HD crosswalk materials
+    private Material curbMat;
+    private Material crosswalkHDMat;
+
     // Phase 3: Curved world effect
     private float curvedWorldIntensity = 0.008f;
 
@@ -140,14 +144,22 @@ public class SimpleTrackRunner : MonoBehaviour
     {
         litShader = FindWorkingShader();
 
-        roadMat = CreateTexturedMaterialTiled("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
-        sidewalkMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
+        // Phase 8: Use HD road asphalt and stone sidewalk textures from Modal
+        roadMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        sidewalkMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.6f, 0.6f, 0.55f));
+        if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
         // Phase 6: Use grass patch texture with more detail if available
         grassMat = CreateTexturedMaterial("tex_ground_grass_patch", new Color(0.35f, 0.55f, 0.25f));
         if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterial("tex_grass", new Color(0.35f, 0.55f, 0.25f));
-        barrierMat = CreateTexturedMaterial("tex_barrier_red", new Color(0.9f, 0.2f, 0.15f));
-        trainMat = CreateTexturedMaterial("tex_train_side", new Color(0.3f, 0.3f, 0.7f));
-        coneMat = CreateTexturedMaterial("tex_cone_orange", new Color(1f, 0.5f, 0f));
+        // Phase 8: Use HD barrier texture from Modal
+        barrierMat = CreateTexturedMaterial("tex_obstacle_barrier_hd", new Color(0.9f, 0.2f, 0.15f));
+        if (barrierMat.mainTexture == null) barrierMat = CreateTexturedMaterial("tex_barrier_red", new Color(0.9f, 0.2f, 0.15f));
+        // Phase 8: Use HD train and cone textures from Modal
+        trainMat = CreateTexturedMaterial("tex_train_side_hd", new Color(0.3f, 0.3f, 0.7f));
+        if (trainMat.mainTexture == null) trainMat = CreateTexturedMaterial("tex_train_side", new Color(0.3f, 0.3f, 0.7f));
+        coneMat = CreateTexturedMaterial("tex_obstacle_cone_hd", new Color(1f, 0.5f, 0f));
+        if (coneMat.mainTexture == null) coneMat = CreateTexturedMaterial("tex_cone_orange", new Color(1f, 0.5f, 0f));
         fenceMat = CreateTexturedMaterial("tex_fence_metal", new Color(0.5f, 0.5f, 0.5f));
         lampMat = CreateTexturedMaterial("tex_streetlamp", new Color(0.4f, 0.4f, 0.4f));
         graffitiMat = CreateTexturedMaterial("tex_graffiti_wall", new Color(0.6f, 0.5f, 0.5f));
@@ -188,10 +200,13 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_prop_streetlight", new Color(0.3f, 0.3f, 0.35f))
         };
 
+        // Phase 8: Use HD obstacle textures from Modal with fallbacks
         dumpsterMat = CreateTexturedMaterial("tex_obstacle_dumpster", new Color(0.2f, 0.45f, 0.2f));
-        constructionMat = CreateTexturedMaterial("tex_obstacle_construction", new Color(0.9f, 0.5f, 0.1f));
+        constructionMat = CreateTexturedMaterial("tex_obstacle_barrier_hd", new Color(0.9f, 0.5f, 0.1f));
+        if (constructionMat.mainTexture == null) constructionMat = CreateTexturedMaterial("tex_obstacle_construction", new Color(0.9f, 0.5f, 0.1f));
         carMat = CreateTexturedMaterial("tex_obstacle_car_side", new Color(0.8f, 0.7f, 0.1f));
-        busMat = CreateTexturedMaterial("tex_obstacle_bus", new Color(0.3f, 0.4f, 0.7f));
+        busMat = CreateTexturedMaterial("tex_obstacle_bus_side", new Color(0.3f, 0.4f, 0.7f));
+        if (busMat.mainTexture == null) busMat = CreateTexturedMaterial("tex_obstacle_bus", new Color(0.3f, 0.4f, 0.7f));
 
         trainVariantMats = new Material[]
         {
@@ -200,8 +215,13 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_train_clean", new Color(0.7f, 0.7f, 0.75f))
         };
 
-        // Phase 3: Hi-res road texture (1024px)
-        roadHDMat = CreateTexturedMaterialTiled("tex_road_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        // Phase 8: Hi-res road texture — prefer Phase 8 HD, fallback to Phase 3
+        roadHDMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+
+        // Phase 8: Road curb material
+        curbMat = CreateTexturedMaterial("tex_road_curb", new Color(0.55f, 0.55f, 0.5f));
+        crosswalkHDMat = CreateTexturedMaterial("tex_road_crosswalk_hd", new Color(0.9f, 0.9f, 0.9f));
 
         // Phase 3+6: Hi-res building textures (1024px) — expanded with Phase 6 buildings
         hiResBuildingMats = new Material[]
@@ -330,6 +350,18 @@ public class SimpleTrackRunner : MonoBehaviour
             sw.transform.localScale = new Vector3(2f, 0.6f, segmentLength);
             sw.GetComponent<Renderer>().material = sidewalkMat;
             Destroy(sw.GetComponent<Collider>());
+
+            // Phase 8: Road curb between road and sidewalk
+            if (curbMat != null)
+            {
+                GameObject curb = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                curb.name = "Curb";
+                curb.transform.SetParent(segment.transform);
+                curb.transform.localPosition = new Vector3(side * 4.7f, -0.05f, segmentLength / 2f);
+                curb.transform.localScale = new Vector3(0.3f, 0.15f, segmentLength);
+                curb.GetComponent<Renderer>().material = curbMat;
+                Destroy(curb.GetComponent<Collider>());
+            }
         }
 
         // Phase 7: Thinner, subtler lane dividers (white dashed, not bright yellow)
