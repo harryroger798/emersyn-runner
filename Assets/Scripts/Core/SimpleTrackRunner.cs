@@ -34,31 +34,66 @@ public class SimpleTrackRunner : MonoBehaviour
     private Shader litShader;
     private int segmentsSpawned = 0;
 
+    private Shader FindWorkingShader()
+    {
+        // Try multiple shader names in priority order
+        string[] shaderNames = new string[]
+        {
+            "Universal Render Pipeline/Lit",
+            "Universal Render Pipeline/Simple Lit",
+            "Universal Render Pipeline/Unlit",
+            "Standard",
+            "Mobile/Diffuse",
+            "Diffuse",
+            "UI/Default",
+            "Sprites/Default"
+        };
+
+        foreach (string sn in shaderNames)
+        {
+            Shader s = Shader.Find(sn);
+            if (s != null)
+            {
+                Debug.Log($"[SimpleTrackRunner] Using shader: {sn}");
+                return s;
+            }
+        }
+
+        // Last resort: get shader from a primitive's default material
+        Debug.LogWarning("[SimpleTrackRunner] No named shader found, using primitive default");
+        GameObject tmp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        Shader sh = tmp.GetComponent<Renderer>().sharedMaterial.shader;
+        Destroy(tmp);
+        return sh;
+    }
+
+    private Material CreateColorMaterial(Color color)
+    {
+        Material mat = new Material(litShader);
+        mat.color = color;
+        if (mat.HasProperty("_BaseColor"))
+            mat.SetColor("_BaseColor", color);
+        if (mat.HasProperty("_Color"))
+            mat.SetColor("_Color", color);
+        return mat;
+    }
+
     private void Awake()
     {
-        litShader = Shader.Find("Universal Render Pipeline/Lit");
-        if (litShader == null) litShader = Shader.Find("Standard");
+        litShader = FindWorkingShader();
 
         // Pre-create materials
-        obstacleMat = new Material(litShader);
-        obstacleMat.color = new Color(0.9f, 0.2f, 0.15f); // Red obstacles
+        obstacleMat = CreateColorMaterial(new Color(0.9f, 0.2f, 0.15f)); // Red obstacles
 
-        coinMat = new Material(litShader);
-        coinMat.color = new Color(1f, 0.85f, 0.1f); // Gold coins
-        coinMat.SetFloat("_Metallic", 0.8f);
-        coinMat.SetFloat("_Smoothness", 0.9f);
+        coinMat = CreateColorMaterial(new Color(1f, 0.85f, 0.1f)); // Gold coins
+        if (coinMat.HasProperty("_Metallic")) coinMat.SetFloat("_Metallic", 0.8f);
+        if (coinMat.HasProperty("_Smoothness")) coinMat.SetFloat("_Smoothness", 0.9f);
 
-        roadMat = new Material(litShader);
-        roadMat.color = new Color(0.35f, 0.35f, 0.4f);
+        roadMat = CreateColorMaterial(new Color(0.35f, 0.35f, 0.4f));
 
-        buildingMat1 = new Material(litShader);
-        buildingMat1.color = new Color(0.6f, 0.55f, 0.5f);
-
-        buildingMat2 = new Material(litShader);
-        buildingMat2.color = new Color(0.5f, 0.5f, 0.6f);
-
-        buildingMat3 = new Material(litShader);
-        buildingMat3.color = new Color(0.55f, 0.6f, 0.55f);
+        buildingMat1 = CreateColorMaterial(new Color(0.6f, 0.55f, 0.5f));
+        buildingMat2 = CreateColorMaterial(new Color(0.5f, 0.5f, 0.6f));
+        buildingMat3 = CreateColorMaterial(new Color(0.55f, 0.6f, 0.55f));
     }
 
     public void StartTrack()
@@ -185,9 +220,7 @@ public class SimpleTrackRunner : MonoBehaviour
             line.transform.SetParent(segment.transform);
             line.transform.localPosition = new Vector3(lx, 0.01f, segmentLength / 2f);
             line.transform.localScale = new Vector3(0.08f, 0.02f, segmentLength);
-            Material lineMat = new Material(litShader);
-            lineMat.color = Color.white;
-            line.GetComponent<Renderer>().material = lineMat;
+            line.GetComponent<Renderer>().material = CreateColorMaterial(Color.white);
             Destroy(line.GetComponent<Collider>());
         }
 

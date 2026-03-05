@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// Procedurally builds the entire game scene at runtime.
@@ -50,6 +51,75 @@ public class RuntimeSceneBuilder : MonoBehaviour
     private float touchStartTime;
     private float swipeThreshold = 30f;
 
+    // Cached shader and font - found once, reused everywhere
+    private Shader cachedShader;
+    private Font cachedFont;
+
+    private Shader FindWorkingShader()
+    {
+        if (cachedShader != null) return cachedShader;
+
+        // Try multiple shader names in priority order
+        string[] shaderNames = new string[]
+        {
+            "Universal Render Pipeline/Lit",
+            "Universal Render Pipeline/Simple Lit",
+            "Universal Render Pipeline/Unlit",
+            "Standard",
+            "Mobile/Diffuse",
+            "Diffuse",
+            "UI/Default",
+            "Sprites/Default"
+        };
+
+        foreach (string sn in shaderNames)
+        {
+            Shader s = Shader.Find(sn);
+            if (s != null)
+            {
+                Debug.Log($"[RuntimeSceneBuilder] Using shader: {sn}");
+                cachedShader = s;
+                return s;
+            }
+        }
+
+        // Last resort: get shader from a primitive's default material
+        Debug.LogWarning("[RuntimeSceneBuilder] No named shader found, using primitive default");
+        GameObject tmp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        cachedShader = tmp.GetComponent<Renderer>().sharedMaterial.shader;
+        Destroy(tmp);
+        return cachedShader;
+    }
+
+    private Material CreateColorMaterial(Color color)
+    {
+        Shader s = FindWorkingShader();
+        Material mat = new Material(s);
+        // Try setting color via multiple property names for compatibility
+        mat.color = color;
+        if (mat.HasProperty("_BaseColor"))
+            mat.SetColor("_BaseColor", color);
+        if (mat.HasProperty("_Color"))
+            mat.SetColor("_Color", color);
+        return mat;
+    }
+
+    private Font FindWorkingFont()
+    {
+        if (cachedFont != null) return cachedFont;
+
+        // Try Arial first (always available in Unity)
+        cachedFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        if (cachedFont != null) return cachedFont;
+
+        cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        if (cachedFont != null) return cachedFont;
+
+        // Fallback: find any loaded font
+        cachedFont = Font.CreateDynamicFontFromOSFont("Arial", 14);
+        return cachedFont;
+    }
+
     private void Awake()
     {
         Debug.Log("[RuntimeSceneBuilder] Starting full scene construction...");
@@ -78,7 +148,10 @@ public class RuntimeSceneBuilder : MonoBehaviour
         // 5. Create UI
         CreateUI();
 
-        // 6. Create track runner (handles procedural track, obstacles, coins)
+        // 6. Ensure EventSystem exists for UI interaction
+        EnsureEventSystem();
+
+        // 7. Create track runner (handles procedural track, obstacles, coins)
         CreateTrackRunner();
 
         // 7. Position camera to look at player
@@ -140,9 +213,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         ground.transform.localScale = new Vector3(12f, 1f, 400f);
 
         Renderer groundRenderer = ground.GetComponent<Renderer>();
-        Material groundMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        groundMat.color = new Color(0.35f, 0.35f, 0.4f); // Dark grey road
-        groundRenderer.material = groundMat;
+        groundRenderer.material = CreateColorMaterial(new Color(0.35f, 0.35f, 0.4f)); // Dark grey road
 
         // Lane markers
         for (int lane = -1; lane <= 1; lane++)
@@ -152,10 +223,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
             marker.transform.position = new Vector3(lane * laneWidth, 0.01f, 100f);
             marker.transform.localScale = new Vector3(0.1f, 0.02f, 400f);
             Renderer mr = marker.GetComponent<Renderer>();
-            Material lineMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-            lineMat.color = new Color(1f, 1f, 1f, 0.5f);
-            mr.material = lineMat;
-            // Remove collider from markers
+            mr.material = CreateColorMaterial(Color.white);
             Destroy(marker.GetComponent<Collider>());
         }
 
@@ -171,10 +239,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
                 wall.transform.position = new Vector3(side * 8f, height / 2f, zPos);
                 wall.transform.localScale = new Vector3(3f, height, Random.Range(8f, 15f));
                 Renderer wr = wall.GetComponent<Renderer>();
-                Material wallMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
                 float shade = Random.Range(0.5f, 0.8f);
-                wallMat.color = new Color(shade, shade * 0.9f, shade * 0.85f);
-                wr.material = wallMat;
+                wr.material = CreateColorMaterial(new Color(shade, shade * 0.9f, shade * 0.85f));
                 Destroy(wall.GetComponent<Collider>());
             }
         }
@@ -191,10 +257,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         body.transform.SetParent(player.transform);
         body.transform.localPosition = new Vector3(0f, 0.5f, 0f);
         body.transform.localScale = new Vector3(0.6f, 0.5f, 0.6f);
-        Renderer bodyRenderer = body.GetComponent<Renderer>();
-        Material bodyMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        bodyMat.color = new Color(0.2f, 0.6f, 0.9f); // Blue shirt
-        bodyRenderer.material = bodyMat;
+        body.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.2f, 0.6f, 0.9f)); // Blue shirt
         Destroy(body.GetComponent<Collider>());
 
         // Head (sphere)
@@ -203,10 +266,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         head.transform.SetParent(player.transform);
         head.transform.localPosition = new Vector3(0f, 1.2f, 0f);
         head.transform.localScale = new Vector3(0.45f, 0.45f, 0.45f);
-        Renderer headRenderer = head.GetComponent<Renderer>();
-        Material headMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        headMat.color = new Color(0.95f, 0.8f, 0.7f); // Skin tone
-        headRenderer.material = headMat;
+        head.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.95f, 0.8f, 0.7f)); // Skin tone
         Destroy(head.GetComponent<Collider>());
 
         // Hair
@@ -215,10 +275,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         hair.transform.SetParent(player.transform);
         hair.transform.localPosition = new Vector3(0f, 1.35f, -0.05f);
         hair.transform.localScale = new Vector3(0.5f, 0.3f, 0.5f);
-        Renderer hairRenderer = hair.GetComponent<Renderer>();
-        Material hairMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-        hairMat.color = new Color(0.3f, 0.15f, 0.05f); // Brown hair
-        hairRenderer.material = hairMat;
+        hair.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.15f, 0.05f)); // Brown hair
         Destroy(hair.GetComponent<Collider>());
 
         // Legs
@@ -229,10 +286,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
             leg.transform.SetParent(player.transform);
             leg.transform.localPosition = new Vector3(side * 0.15f, -0.1f, 0f);
             leg.transform.localScale = new Vector3(0.25f, 0.35f, 0.25f);
-            Renderer lr = leg.GetComponent<Renderer>();
-            Material legMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-            legMat.color = new Color(0.25f, 0.25f, 0.35f); // Dark pants
-            lr.material = legMat;
+            leg.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.25f, 0.25f, 0.35f)); // Dark pants
             Destroy(leg.GetComponent<Collider>());
         }
 
@@ -350,8 +404,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
 
         Text text = textObj.AddComponent<Text>();
         text.text = content;
-        text.font = Resources.GetBuiltinResource<Font>("LegacySRuntime.ttf");
-        if (text.font == null) text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        text.font = FindWorkingFont();
         text.fontSize = fontSize;
         text.color = color;
         text.fontStyle = style;
@@ -394,8 +447,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
 
         Text text = labelObj.AddComponent<Text>();
         text.text = label;
-        text.font = Resources.GetBuiltinResource<Font>("LegacySRuntime.ttf");
-        if (text.font == null) text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        text.font = FindWorkingFont();
         text.fontSize = 30;
         text.color = Color.white;
         text.fontStyle = FontStyle.Bold;
@@ -406,6 +458,16 @@ public class RuntimeSceneBuilder : MonoBehaviour
     {
         GameObject trackObj = new GameObject("SimpleTrackRunner");
         trackRunner = trackObj.AddComponent<SimpleTrackRunner>();
+    }
+
+    private void EnsureEventSystem()
+    {
+        if (FindObjectOfType<EventSystem>() == null)
+        {
+            GameObject esObj = new GameObject("EventSystem");
+            esObj.AddComponent<EventSystem>();
+            esObj.AddComponent<StandaloneInputModule>();
+        }
     }
 
     // --- UI Callbacks ---
