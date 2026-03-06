@@ -56,8 +56,8 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material curbMat;
     private Material crosswalkHDMat;
 
-    // Phase 3+10: Curved world effect (reduced from 0.008 to 0.005 to minimize grass stretching)
-    private float curvedWorldIntensity = 0.005f;
+    // Phase 13: Curved world effect (reduced from 0.005 to 0.003 to minimize edge stretching artifacts)
+    private float curvedWorldIntensity = 0.003f;
 
     private Shader litShader;
     private int segmentsSpawned = 0;
@@ -235,7 +235,10 @@ public class SimpleTrackRunner : MonoBehaviour
         {
             trainMat,
             CreateTexturedMaterial("tex_train_graffiti_hd", new Color(0.4f, 0.3f, 0.5f)),
-            CreateTexturedMaterial("tex_train_clean", new Color(0.7f, 0.7f, 0.75f))
+            CreateTexturedMaterial("tex_train_clean", new Color(0.7f, 0.7f, 0.75f)),
+            // Phase 13: Subway-style train textures from Modal
+            CreateTexturedMaterial("tex_train_subway_blue", new Color(0.3f, 0.4f, 0.7f)),
+            CreateTexturedMaterial("tex_train_subway_red", new Color(0.7f, 0.25f, 0.2f))
         };
 
         // Phase 12: Use dark asphalt from Modal, fallback chain to Phase 8 HD
@@ -277,7 +280,11 @@ public class SimpleTrackRunner : MonoBehaviour
             // Phase 12: 3 new building types from Modal
             CreateTexturedMaterial("tex_building_toy_store", new Color(0.8f, 0.6f, 0.9f)),
             CreateTexturedMaterial("tex_building_coffee_shop", new Color(0.6f, 0.45f, 0.3f)),
-            CreateTexturedMaterial("tex_building_pet_shop", new Color(0.5f, 0.7f, 0.5f))
+            CreateTexturedMaterial("tex_building_pet_shop", new Color(0.5f, 0.7f, 0.5f)),
+            // Phase 13: 3 new building types from Modal
+            CreateTexturedMaterial("tex_building_subway_station", new Color(0.5f, 0.5f, 0.55f)),
+            CreateTexturedMaterial("tex_building_convenience_store", new Color(0.7f, 0.6f, 0.4f)),
+            CreateTexturedMaterial("tex_building_electronics_shop", new Color(0.35f, 0.4f, 0.6f))
         };
 
         // Phase 3: Environment details
@@ -391,10 +398,14 @@ public class SimpleTrackRunner : MonoBehaviour
             GameObject sw = GameObject.CreatePrimitive(PrimitiveType.Cube);
             sw.name = "Sidewalk";
             sw.transform.SetParent(segment.transform);
-            // Phase 11: Wider sidewalks (3.5 instead of 2) to cover grass gap and reduce orange streaks
-            sw.transform.localPosition = new Vector3(side * 6.2f, -0.3f, segmentLength / 2f);
-            sw.transform.localScale = new Vector3(3.5f, 0.6f, segmentLength);
-            sw.GetComponent<Renderer>().material = sidewalkMat;
+            // Phase 13: Sidewalks use dark road-matching material to eliminate orange edge streaks
+            sw.transform.localPosition = new Vector3(side * 7.5f, -0.3f, segmentLength / 2f);
+            sw.transform.localScale = new Vector3(4f, 0.6f, segmentLength);
+            // Use dark material matching road color so curved world stretching is invisible
+            Material swEdgeMat = CreateTexturedMaterial("tex_sidewalk_wide", new Color(0.4f, 0.4f, 0.42f));
+            if (swEdgeMat.mainTexture == null) swEdgeMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.4f, 0.4f, 0.42f));
+            if (swEdgeMat.mainTexture == null) swEdgeMat = sidewalkMat;
+            sw.GetComponent<Renderer>().material = swEdgeMat;
             Destroy(sw.GetComponent<Collider>());
 
             // Phase 8: Road curb between road and sidewalk

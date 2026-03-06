@@ -974,6 +974,30 @@ public class RuntimeSceneBuilder : MonoBehaviour
         CreateUIText(mainMenuPanel.transform, "VersionText", "v4.0 Phase 3 - Curved World + Hi-Res",
             new Vector2(0f, -800f), 18, new Color(0.5f, 0.5f, 0.5f), FontStyle.Normal);
 
+        // Phase 13: Bottom screen gradient overlay to mask curved world edge stretching
+        GameObject bottomFade = new GameObject("BottomFade");
+        bottomFade.transform.SetParent(canvasObj.transform, false);
+        RectTransform fadeRT = bottomFade.AddComponent<RectTransform>();
+        fadeRT.anchorMin = new Vector2(0f, 0f);
+        fadeRT.anchorMax = new Vector2(1f, 0f);
+        fadeRT.pivot = new Vector2(0.5f, 0f);
+        fadeRT.anchoredPosition = Vector2.zero;
+        fadeRT.sizeDelta = new Vector2(0f, 350f);
+        Image fadeImg = bottomFade.AddComponent<Image>();
+        // Create a gradient texture: black at bottom, transparent at top
+        Texture2D gradTex = new Texture2D(1, 64, TextureFormat.RGBA32, false);
+        for (int y = 0; y < 64; y++)
+        {
+            float a = Mathf.Lerp(0.85f, 0f, (float)y / 63f);
+            gradTex.SetPixel(0, y, new Color(0.1f, 0.1f, 0.12f, a));
+        }
+        gradTex.Apply();
+        Sprite gradSprite = Sprite.Create(gradTex, new Rect(0, 0, 1, 64), new Vector2(0.5f, 0f));
+        fadeImg.sprite = gradSprite;
+        fadeImg.type = Image.Type.Sliced;
+        fadeImg.raycastTarget = false;
+        bottomFade.transform.SetAsLastSibling();
+
         hudPanel = CreatePanel(canvasObj.transform, "HUDPanel");
         hudPanel.SetActive(false);
 
