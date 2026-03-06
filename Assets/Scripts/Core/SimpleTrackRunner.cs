@@ -302,8 +302,8 @@ public class SimpleTrackRunner : MonoBehaviour
     {
         ClearAll();
         isRunning = true;
-        // Phase 14L: Spawn the first segment behind the player so the camera never sees "void" behind Z=0
-        nextSpawnZ = -segmentLength;
+        // Phase 14M: Spawn the first segment slightly behind player (but above despawnZ) so camera never sees "void" behind Z=0
+        nextSpawnZ = -segmentLength * 0.5f;
         segmentsSpawned = 0;
 
         for (int i = 0; i < maxSegments; i++)
