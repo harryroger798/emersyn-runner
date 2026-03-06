@@ -457,9 +457,10 @@ public class SimpleTrackRunner : MonoBehaviour
             // Phase 14E: Sidewalks pushed further out (road is now 20 wide)
             sw.transform.localPosition = new Vector3(side * 12.5f, -0.3f, segmentLength / 2f);
             sw.transform.localScale = new Vector3(5f, 0.6f, segmentLength);
-            // Phase 15H: Use lighter concrete sidewalk texture (UV-safe PIL), fallback chain
-            Material swEdgeMat = CreateTexturedMaterial("tex_sidewalk_wide_clean", new Color(0.47f, 0.47f, 0.45f));
-            if (swEdgeMat.mainTexture == null) swEdgeMat = CreateTexturedMaterial("tex_sidewalk_light_concrete", new Color(0.47f, 0.47f, 0.45f));
+            // Phase 15J: Use warm concrete sidewalk texture (UV-safe PIL), fallback chain
+            Material swEdgeMat = CreateTexturedMaterial("tex_sidewalk_warm", new Color(0.55f, 0.53f, 0.50f));
+            if (swEdgeMat.mainTexture == null) swEdgeMat = CreateTexturedMaterial("tex_sidewalk_wide_clean", new Color(0.55f, 0.53f, 0.50f));
+            if (swEdgeMat.mainTexture == null) swEdgeMat = CreateTexturedMaterial("tex_sidewalk_light_concrete", new Color(0.55f, 0.53f, 0.50f));
             if (swEdgeMat.mainTexture == null) swEdgeMat = sidewalkMat;
             sw.GetComponent<Renderer>().material = swEdgeMat;
             Destroy(sw.GetComponent<Collider>());
@@ -587,17 +588,57 @@ public class SimpleTrackRunner : MonoBehaviour
                     Destroy(rooftop.GetComponent<Collider>());
                 }
 
-                // Awning on ground floor shops
-                if (height < 10f && Random.value < 0.3f)
+                // Phase 15J: Awning on ground floor shops with stripe texture overlay
+                if (height < 10f && Random.value < 0.35f)
                 {
                     GameObject awning = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     awning.name = "Awning";
                     awning.transform.SetParent(building.transform);
                     awning.transform.localPosition = new Vector3(-side * 0.55f, -0.35f, 0f);
                     awning.transform.localScale = new Vector3(0.3f, 0.02f, 0.4f);
-                    Color awningColor = new Color(Random.Range(0.5f, 1f), Random.Range(0.2f, 0.6f), Random.Range(0.1f, 0.4f));
-                    awning.GetComponent<Renderer>().material = CreateColorMaterial(awningColor);
+                    Material awningStripeMat = CreateTexturedMaterial("tex_awning_stripe", new Color(0.8f, 0.3f, 0.2f));
+                    if (awningStripeMat.mainTexture != null)
+                        awning.GetComponent<Renderer>().material = awningStripeMat;
+                    else
+                    {
+                        Color awningColor = new Color(Random.Range(0.5f, 1f), Random.Range(0.2f, 0.6f), Random.Range(0.1f, 0.4f));
+                        awning.GetComponent<Renderer>().material = CreateColorMaterial(awningColor);
+                    }
                     Destroy(awning.GetComponent<Collider>());
+                }
+
+                // Phase 15J: Neon sign overlay on building front (flat quad)
+                if (height > 8f && Random.value < 0.2f)
+                {
+                    Material neonMat = CreateTexturedMaterial("tex_neon_sign", new Color(0.8f, 0.3f, 0.7f));
+                    if (neonMat.mainTexture != null)
+                    {
+                        GameObject neon = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                        neon.name = "NeonSign";
+                        neon.transform.SetParent(building.transform);
+                        neon.transform.localPosition = new Vector3(-side * 0.51f, 0.1f, 0f);
+                        neon.transform.localScale = new Vector3(0.25f, 0.1f, 1f);
+                        neon.transform.localRotation = Quaternion.Euler(0f, side > 0 ? -90f : 90f, 0f);
+                        neon.GetComponent<Renderer>().material = neonMat;
+                        Destroy(neon.GetComponent<Collider>());
+                    }
+                }
+
+                // Phase 15J: Graffiti overlay on building side (flat quad)
+                if (height > 6f && height < 14f && Random.value < 0.15f)
+                {
+                    Material graffitiMat = CreateTexturedMaterial("tex_graffiti_overlay", new Color(0.7f, 0.3f, 0.3f));
+                    if (graffitiMat.mainTexture != null)
+                    {
+                        GameObject graffiti = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                        graffiti.name = "Graffiti";
+                        graffiti.transform.SetParent(building.transform);
+                        graffiti.transform.localPosition = new Vector3(-side * 0.51f, -0.15f, 0.1f);
+                        graffiti.transform.localScale = new Vector3(0.35f, 0.15f, 1f);
+                        graffiti.transform.localRotation = Quaternion.Euler(0f, side > 0 ? -90f : 90f, 0f);
+                        graffiti.GetComponent<Renderer>().material = graffitiMat;
+                        Destroy(graffiti.GetComponent<Collider>());
+                    }
                 }
 
                 zOffset += depth;
