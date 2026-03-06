@@ -805,6 +805,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
         speedShape.scale = new Vector3(3f, 3f, 0.1f);
         ParticleSystemRenderer speedRend = speedObj.GetComponent<ParticleSystemRenderer>();
         speedRend.material = CreateColorMaterial(Color.white);
+        // Phase 14H: Disable speed lines temporarily — they are causing persistent road streak artifacts
+        speedObj.SetActive(false);
+        speedLinesPS = null;
 
         // Phase 4: Improved dust particles — smaller, softer, more realistic
         GameObject dustObj = new GameObject("DustParticles");
@@ -828,6 +831,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
         dustShape.radius = 0.3f;
         ParticleSystemRenderer dustRend = dustObj.GetComponent<ParticleSystemRenderer>();
         dustRend.material = CreateColorMaterial(new Color(0.6f, 0.6f, 0.6f, 0.35f));
+        // Phase 14H: Disable dust temporarily — it contributes to streak artifacts
+        dustObj.SetActive(false);
+        dustPS = null;
 
         // Phase 3: Enhanced coin collect burst with VFX texture
         GameObject coinPObj = new GameObject("CoinParticles");
