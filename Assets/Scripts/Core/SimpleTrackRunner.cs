@@ -56,10 +56,10 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material curbMat;
     private Material crosswalkHDMat;
 
-    // Phase 14E: Curved world effect — reduced intensity + pushed start further
-    // Near-camera segments stay flat to eliminate edge stretching artifacts
-    private float curvedWorldIntensity = 0.001f;
-    private float curvedWorldStartZ = 60f; // curve starts at this Z distance
+    // Phase 14G: Curved world DISABLED — was causing orange streak artifacts
+    // The per-frame vertex manipulation stretched textures at perspective angles
+    private float curvedWorldIntensity = 0f;
+    private float curvedWorldStartZ = 9999f; // effectively disabled
 
     private Shader litShader;
     private int segmentsSpawned = 0;
@@ -377,8 +377,8 @@ public class SimpleTrackRunner : MonoBehaviour
             SpawnSegment(false);
         }
 
-        // Phase 4: Apply curved-world effect every frame so segments bend as they move
-        UpdateCurvedWorld();
+        // Phase 14G: Curved world disabled — caused orange streak artifacts
+        // UpdateCurvedWorld();
     }
 
     private void SpawnSegment(bool safe)
@@ -757,8 +757,8 @@ public class SimpleTrackRunner : MonoBehaviour
             }
         }
 
-        // Phase 3: Apply curved-world visual offset to distant segments
-        ApplyCurvedWorld(segment);
+        // Phase 14G: Curved world disabled — caused orange streak artifacts
+        // ApplyCurvedWorld(segment);
 
         activeSegments.Add(segment);
 
