@@ -151,10 +151,11 @@ public class SimpleTrackRunner : MonoBehaviour
         sidewalkMat = CreateTexturedMaterial("tex_sidewalk_hd", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
-        // Phase 10: Use HD grass texture from Modal with tiling to reduce stretching
-        grassMat = CreateTexturedMaterialTiled("tex_ground_grass_hd", new Color(0.35f, 0.55f, 0.25f), 4f, 4f);
-        if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_ground_grass_patch", new Color(0.35f, 0.55f, 0.25f), 4f, 4f);
-        if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_grass", new Color(0.35f, 0.55f, 0.25f), 4f, 4f);
+        // Phase 13: Use dark fill texture for grass strips to eliminate orange streaks
+        // The strips between road and sidewalk were showing as orange due to curved world stretching
+        grassMat = CreateTexturedMaterialTiled("tex_ground_dark_fill", new Color(0.25f, 0.25f, 0.28f), 4f, 4f);
+        if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_road_dark_asphalt", new Color(0.25f, 0.25f, 0.28f), 4f, 4f);
+        if (grassMat.mainTexture == null) grassMat = CreateColorMaterial(new Color(0.25f, 0.25f, 0.28f));
         // Phase 8: Use HD barrier texture from Modal
         barrierMat = CreateTexturedMaterial("tex_obstacle_barrier_hd", new Color(0.9f, 0.2f, 0.15f));
         if (barrierMat.mainTexture == null) barrierMat = CreateTexturedMaterial("tex_barrier_red", new Color(0.9f, 0.2f, 0.15f));
@@ -379,7 +380,8 @@ public class SimpleTrackRunner : MonoBehaviour
         road.name = "Road";
         road.transform.SetParent(segment.transform);
         road.transform.localPosition = new Vector3(0f, -0.55f, segmentLength / 2f);
-        road.transform.localScale = new Vector3(10f, 1f, segmentLength + 0.2f);
+        // Phase 13: Wider road (14 units) to fully cover gaps and eliminate orange streaks
+        road.transform.localScale = new Vector3(14f, 1f, segmentLength + 0.5f);
         road.GetComponent<Renderer>().material = roadHDMat != null ? roadHDMat : roadMat;
         Destroy(road.GetComponent<Collider>());
 

@@ -395,12 +395,23 @@ public class RuntimeSceneBuilder : MonoBehaviour
                 float sx = Random.Range(8f, 20f);
                 float sy = Random.Range(3f, 7f);
                 puff.transform.localScale = new Vector3(sx, sy, Random.Range(6f, 12f));
-                Material cloudMat = CreateColorMaterial(cloudColor);
-                // Force unlit/bright appearance to avoid shadow darkening
-                if (cloudMat.HasProperty("_Metallic")) cloudMat.SetFloat("_Metallic", 0f);
-                if (cloudMat.HasProperty("_Smoothness")) cloudMat.SetFloat("_Smoothness", 0f);
+                // Phase 13: Use Unlit shader for clouds so they're always bright white
+                Shader unlitShader = Shader.Find("Universal Render Pipeline/Unlit");
+                if (unlitShader == null) unlitShader = Shader.Find("Unlit/Color");
+                if (unlitShader == null) unlitShader = Shader.Find("Mobile/Diffuse");
+                Material cloudMat;
+                if (unlitShader != null)
+                {
+                    cloudMat = new Material(unlitShader);
+                    cloudMat.color = cloudColor;
+                    if (cloudMat.HasProperty("_BaseColor")) cloudMat.SetColor("_BaseColor", cloudColor);
+                    if (cloudMat.HasProperty("_Color")) cloudMat.SetColor("_Color", cloudColor);
+                }
+                else
+                {
+                    cloudMat = CreateColorMaterial(cloudColor);
+                }
                 puff.GetComponent<Renderer>().material = cloudMat;
-                // Phase 12: Disable shadow casting/receiving on clouds
                 puff.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 puff.GetComponent<Renderer>().receiveShadows = false;
                 Destroy(puff.GetComponent<Collider>());
