@@ -421,60 +421,12 @@ public class RuntimeSceneBuilder : MonoBehaviour
 
     private void CreateGround()
     {
+        // Phase 14K: Static ground REMOVED — it used old tex_road_asphalt_hd (with orange markings)
+        // at Y=0, sitting ABOVE the dynamic SimpleTrackRunner road segments at Y=-0.05.
+        // This caused persistent orange streak artifacts across all previous phases (14C-14J).
+        // SimpleTrackRunner.SpawnSegment() creates all road/sidewalk/curb geometry dynamically
+        // with clean textures, so this static ground is redundant.
         ground = new GameObject("Ground");
-
-        GameObject road = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        road.name = "Road";
-        road.transform.SetParent(ground.transform);
-        road.transform.position = new Vector3(0f, -0.5f, 100f);
-        road.transform.localScale = new Vector3(10f, 1f, 400f);
-        // Phase 8: Use HD road asphalt from Modal, fallback to original
-        Material groundRoadMat = CreateTexturedMaterial("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f));
-        if (groundRoadMat.mainTexture == null) groundRoadMat = CreateTexturedMaterial("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f));
-        road.GetComponent<Renderer>().material = groundRoadMat;
-        Destroy(road.GetComponent<Collider>());
-
-        for (int side = -1; side <= 1; side += 2)
-        {
-            GameObject sidewalk = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            sidewalk.name = "Sidewalk";
-            sidewalk.transform.SetParent(ground.transform);
-            sidewalk.transform.position = new Vector3(side * 5.8f, -0.3f, 100f);
-            sidewalk.transform.localScale = new Vector3(2f, 0.6f, 400f);
-            // Phase 8: Use stone sidewalk from Modal, fallback to original
-            Material swMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.6f, 0.6f, 0.55f));
-            if (swMat.mainTexture == null) swMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
-            sidewalk.GetComponent<Renderer>().material = swMat;
-            Destroy(sidewalk.GetComponent<Collider>());
-        }
-
-        // Phase 7: Thinner, subtler lane dividers
-        for (float lx = -1.25f; lx <= 1.25f; lx += 2.5f)
-        {
-            for (int dash = 0; dash < 50; dash++)
-            {
-                GameObject line = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                line.name = "LaneDash";
-                line.transform.SetParent(ground.transform);
-                line.transform.position = new Vector3(lx, 0.02f, dash * 8f);
-                line.transform.localScale = new Vector3(0.08f, 0.02f, 3f);
-                line.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.9f, 0.9f, 0.85f, 0.8f));
-                Destroy(line.GetComponent<Collider>());
-            }
-        }
-
-        // Phase 12: Lower grass planes well below road to prevent orange bleed-through
-        for (int side = -1; side <= 1; side += 2)
-        {
-            GameObject grass = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            grass.name = "Grass";
-            grass.transform.SetParent(ground.transform);
-            grass.transform.position = new Vector3(side * 18f, -1.5f, 100f);
-            grass.transform.localScale = new Vector3(20f, 0.5f, 400f);
-            grass.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_grass",
-                new Color(0.35f, 0.55f, 0.25f));
-            Destroy(grass.GetComponent<Collider>());
-        }
     }
 
     private void CreatePlayer()
@@ -805,9 +757,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         speedShape.scale = new Vector3(3f, 3f, 0.1f);
         ParticleSystemRenderer speedRend = speedObj.GetComponent<ParticleSystemRenderer>();
         speedRend.material = CreateColorMaterial(Color.white);
-        // Phase 14H: Disable speed lines temporarily — they are causing persistent road streak artifacts
-        speedObj.SetActive(false);
-        speedLinesPS = null;
+        // Phase 14K: Re-enabled — root cause was static ground plane, not particles
 
         // Phase 4: Improved dust particles — smaller, softer, more realistic
         GameObject dustObj = new GameObject("DustParticles");
@@ -831,9 +781,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         dustShape.radius = 0.3f;
         ParticleSystemRenderer dustRend = dustObj.GetComponent<ParticleSystemRenderer>();
         dustRend.material = CreateColorMaterial(new Color(0.6f, 0.6f, 0.6f, 0.35f));
-        // Phase 14H: Disable dust temporarily — it contributes to streak artifacts
-        dustObj.SetActive(false);
-        dustPS = null;
+        // Phase 14K: Re-enabled — root cause was static ground plane, not particles
 
         // Phase 3: Enhanced coin collect burst with VFX texture
         GameObject coinPObj = new GameObject("CoinParticles");
