@@ -146,15 +146,15 @@ public class SimpleTrackRunner : MonoBehaviour
     {
         litShader = FindWorkingShader();
 
-        // Phase 14: Use clean asphalt (no colored markings) to eliminate orange streaks
-        roadMat = CreateTexturedMaterialTiled("tex_road_clean_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        // Phase 15D: Use Subway-style road texture (Modal SDXL), fallback chain
+        roadMat = CreateTexturedMaterialTiled("tex_road_subway_style", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_clean_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_plain_grey", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
-        if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
-        // Phase 14: Use clean grey sidewalk texture, fallback chain
-        sidewalkMat = CreateTexturedMaterial("tex_sidewalk_clean_grey", new Color(0.6f, 0.6f, 0.55f));
+        // Phase 15D: Use Subway-style sidewalk texture (Modal SDXL), fallback chain
+        sidewalkMat = CreateTexturedMaterial("tex_sidewalk_subway_style", new Color(0.6f, 0.6f, 0.55f));
+        if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_clean_grey", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_hd", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.6f, 0.6f, 0.55f));
-        if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
         // Phase 14: Use dark green grass texture, fallback to clean asphalt color
         grassMat = CreateTexturedMaterialTiled("tex_grass_dark_green", new Color(0.15f, 0.3f, 0.15f), 4f, 4f);
         if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_ground_dark_fill", new Color(0.25f, 0.25f, 0.28f), 4f, 4f);
@@ -201,12 +201,12 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_prop_bollard_clean", new Color(0.6f, 0.6f, 0.6f)),
             CreateColorMaterial(new Color(0.4f, 0.55f, 0.3f)),   // planter - green
             CreateColorMaterial(new Color(0.3f, 0.3f, 0.35f)),   // streetlight - dark grey
-            CreateColorMaterial(new Color(0.3f, 0.4f, 0.7f)),    // vending machine - blue
+            CreateTexturedMaterial("tex_prop_vending_machine_hd", new Color(0.3f, 0.4f, 0.7f)),    // vending machine - HD texture
             CreateColorMaterial(new Color(0.8f, 0.2f, 0.15f)),   // phone booth - red
             CreateColorMaterial(new Color(0.4f, 0.4f, 0.4f)),    // fire escape - grey
             CreateColorMaterial(new Color(0.8f, 0.3f, 0.2f)),    // awning - red-orange
             CreateColorMaterial(new Color(0.3f, 0.55f, 0.25f)),  // potted plant - green
-            CreateColorMaterial(new Color(0.8f, 0.5f, 0.2f)),    // food cart - orange
+            CreateTexturedMaterial("tex_prop_food_cart_hd", new Color(0.8f, 0.5f, 0.2f)),    // food cart - HD texture
             CreateColorMaterial(new Color(0.5f, 0.6f, 0.7f)),    // bus stop - steel blue
             CreateColorMaterial(new Color(0.3f, 0.3f, 0.3f))     // traffic light - dark grey
         };
@@ -227,9 +227,9 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_train_subway_red_clean", new Color(0.7f, 0.25f, 0.2f))
         };
 
-        // Phase 14: Use clean asphalt for HD road (no orange markings)
-        roadHDMat = CreateTexturedMaterialTiled("tex_road_clean_asphalt", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
-        if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_plain_grey", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        // Phase 15D: Use Subway-style HD road texture (Modal SDXL), fallback chain
+        roadHDMat = CreateTexturedMaterialTiled("tex_road_subway_style", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
+        if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_clean_asphalt", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
         if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
 
         // Phase 14: Use dark grey curb texture
@@ -271,12 +271,20 @@ public class SimpleTrackRunner : MonoBehaviour
             // Phase 13: 3 new building types from Modal
             CreateTexturedMaterial("tex_building_subway_station", new Color(0.5f, 0.5f, 0.55f)),
             CreateTexturedMaterial("tex_building_convenience_store", new Color(0.7f, 0.6f, 0.4f)),
-            CreateTexturedMaterial("tex_building_electronics_shop", new Color(0.35f, 0.4f, 0.6f))
+            CreateTexturedMaterial("tex_building_electronics_shop", new Color(0.35f, 0.4f, 0.6f)),
+            // Phase 15D: 5 new Subway Surfers-style building facades (Modal SDXL, flat surfaces)
+            CreateTexturedMaterial("tex_building_neon_arcade", new Color(0.8f, 0.3f, 0.7f)),
+            CreateTexturedMaterial("tex_building_sushi_bar", new Color(0.8f, 0.4f, 0.3f)),
+            CreateTexturedMaterial("tex_building_comic_store", new Color(0.4f, 0.6f, 0.9f)),
+            CreateTexturedMaterial("tex_building_ice_cream", new Color(0.9f, 0.7f, 0.8f)),
+            CreateTexturedMaterial("tex_building_skate_shop", new Color(0.5f, 0.7f, 0.4f))
         };
 
-        // Phase 15B: Keep building textures for billboards (large flat surfaces), solid for tunnel
-        billboardMat1 = CreateTexturedMaterial("tex_env_billboard_1", new Color(0.6f, 0.5f, 0.9f));
-        billboardMat2 = CreateTexturedMaterial("tex_env_billboard_2", new Color(0.9f, 0.5f, 0.3f));
+        // Phase 15D: Use new Modal SDXL billboard textures (flat surfaces), fallback to Phase 3
+        billboardMat1 = CreateTexturedMaterial("tex_billboard_sneakers", new Color(0.6f, 0.5f, 0.9f));
+        if (billboardMat1.mainTexture == null) billboardMat1 = CreateTexturedMaterial("tex_env_billboard_1", new Color(0.6f, 0.5f, 0.9f));
+        billboardMat2 = CreateTexturedMaterial("tex_billboard_energy_drink", new Color(0.9f, 0.5f, 0.3f));
+        if (billboardMat2.mainTexture == null) billboardMat2 = CreateTexturedMaterial("tex_env_billboard_2", new Color(0.9f, 0.5f, 0.3f));
         rooftopMat = CreateColorMaterial(new Color(0.45f, 0.45f, 0.48f));
         // Phase 15C: UV-safe tunnel gradient texture
         tunnelMat = CreateTexturedMaterial("tex_tunnel_interior_clean", new Color(0.25f, 0.25f, 0.28f));
@@ -898,22 +906,42 @@ public class SimpleTrackRunner : MonoBehaviour
                 obs.GetComponent<Renderer>().material = barrierMat;
                 break;
 
-            case 5: // Train with variant textures
+            case 5: // Phase 15D: Enhanced train with 5 cars, graffiti side panels, doors/windows
                 obs = new GameObject("Train");
                 Material selectedTrainMat = trainVariantMats[Random.Range(0, trainVariantMats.Length)];
-                for (int c = 0; c < 3; c++)
+                Material graffitiSideMat = CreateTexturedMaterial("tex_train_graffiti_side_hd", new Color(0.4f, 0.4f, 0.5f));
+                int trainCars = Random.Range(3, 6); // 3-5 cars
+                for (int c = 0; c < trainCars; c++)
                 {
-                    GameObject car = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    car.transform.SetParent(obs.transform);
-                    car.transform.localPosition = new Vector3(0f, 1.2f, c * 2.2f);
-                    car.transform.localScale = new Vector3(1.8f, 2.2f, 2f);
-                    car.GetComponent<Renderer>().material = selectedTrainMat;
-                    Destroy(car.GetComponent<Collider>());
+                    GameObject tcar = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    tcar.transform.SetParent(obs.transform);
+                    tcar.transform.localPosition = new Vector3(0f, 1.2f, c * 2.2f);
+                    tcar.transform.localScale = new Vector3(1.8f, 2.2f, 2f);
+                    tcar.GetComponent<Renderer>().material = selectedTrainMat;
+                    Destroy(tcar.GetComponent<Collider>());
+                    // Phase 15D: Graffiti side panel (flat quad — perfect for SDXL texture)
+                    if (graffitiSideMat.mainTexture != null && Random.value < 0.5f)
+                    {
+                        GameObject graffiti = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                        graffiti.transform.SetParent(tcar.transform);
+                        graffiti.transform.localPosition = new Vector3(0.51f, 0f, 0f);
+                        graffiti.transform.localScale = new Vector3(0.9f, 0.7f, 1f);
+                        graffiti.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                        graffiti.GetComponent<Renderer>().material = graffitiSideMat;
+                        Destroy(graffiti.GetComponent<Collider>());
+                    }
+                    // Door detail
+                    GameObject door = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    door.transform.SetParent(tcar.transform);
+                    door.transform.localPosition = new Vector3(-0.51f, -0.1f, 0f);
+                    door.transform.localScale = new Vector3(0.02f, 0.6f, 0.25f);
+                    door.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.5f, 0.5f, 0.55f));
+                    Destroy(door.GetComponent<Collider>());
                 }
                 GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 roof.transform.SetParent(obs.transform);
-                roof.transform.localPosition = new Vector3(0f, 2.4f, 2.2f);
-                roof.transform.localScale = new Vector3(1.9f, 0.2f, 6.5f);
+                roof.transform.localPosition = new Vector3(0f, 2.4f, (trainCars - 1) * 1.1f);
+                roof.transform.localScale = new Vector3(1.9f, 0.2f, trainCars * 2.2f + 0.3f);
                 roof.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.3f, 0.35f));
                 Destroy(roof.GetComponent<Collider>());
                 break;
@@ -964,20 +992,29 @@ public class SimpleTrackRunner : MonoBehaviour
                 }
                 break;
 
-            case 10: // Parked car
+            case 10: // Phase 15D: Enhanced parked car with glossy paint texture
                 obs = new GameObject("Car");
+                Material carPaintMat = CreateTexturedMaterial("tex_car_paint_glossy", new Color(0.95f, 0.85f, 0.1f));
+                if (carPaintMat.mainTexture == null) carPaintMat = carMat;
                 GameObject carBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 carBody.transform.SetParent(obs.transform);
                 carBody.transform.localPosition = new Vector3(0f, 0.6f, 0f);
                 carBody.transform.localScale = new Vector3(1.6f, 1.0f, 3.0f);
-                carBody.GetComponent<Renderer>().material = carMat;
+                carBody.GetComponent<Renderer>().material = carPaintMat;
                 Destroy(carBody.GetComponent<Collider>());
                 GameObject carRoof = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 carRoof.transform.SetParent(obs.transform);
                 carRoof.transform.localPosition = new Vector3(0f, 1.3f, 0.2f);
                 carRoof.transform.localScale = new Vector3(1.4f, 0.5f, 1.5f);
-                carRoof.GetComponent<Renderer>().material = carMat;
+                carRoof.GetComponent<Renderer>().material = carPaintMat;
                 Destroy(carRoof.GetComponent<Collider>());
+                // Phase 15D: Windshield detail
+                GameObject windshield = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                windshield.transform.SetParent(obs.transform);
+                windshield.transform.localPosition = new Vector3(0f, 1.35f, 1.1f);
+                windshield.transform.localScale = new Vector3(1.3f, 0.4f, 0.02f);
+                windshield.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.6f, 0.75f, 0.9f, 0.8f));
+                Destroy(windshield.GetComponent<Collider>());
                 for (int wx = -1; wx <= 1; wx += 2)
                 {
                     for (int wz = -1; wz <= 1; wz += 2)
@@ -993,13 +1030,15 @@ public class SimpleTrackRunner : MonoBehaviour
                 }
                 break;
 
-            default: // Bus obstacle
+            default: // Phase 15D: Enhanced bus with red paint texture
                 obs = new GameObject("Bus");
+                Material busPaintMat = CreateTexturedMaterial("tex_bus_paint_red", new Color(0.7f, 0.2f, 0.15f));
+                if (busPaintMat.mainTexture == null) busPaintMat = busMat;
                 GameObject busBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 busBody.transform.SetParent(obs.transform);
                 busBody.transform.localPosition = new Vector3(0f, 1.2f, 0f);
                 busBody.transform.localScale = new Vector3(2.0f, 2.2f, 5.0f);
-                busBody.GetComponent<Renderer>().material = busMat;
+                busBody.GetComponent<Renderer>().material = busPaintMat;
                 Destroy(busBody.GetComponent<Collider>());
                 for (int bw = 0; bw < 4; bw++)
                 {

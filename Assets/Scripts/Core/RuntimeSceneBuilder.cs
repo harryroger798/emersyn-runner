@@ -401,8 +401,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
             mainCamera.backgroundColor = new Color(0.4f, 0.7f, 0.95f);
         }
 
-        // Phase 8: Sky gradient backdrop — use blue gradient from Modal, fallback to Phase 6
-        Texture2D skyTex = LoadTexture("tex_sky_blue_gradient");
+        // Phase 15D: Sky backdrop — use Subway-style blue sky from Modal, fallback chain
+        Texture2D skyTex = LoadTexture("tex_sky_subway_blue");
+        if (skyTex == null) skyTex = LoadTexture("tex_sky_blue_gradient");
         if (skyTex == null) skyTex = LoadTexture("tex_sky_gradient");
         if (skyTex != null)
         {
@@ -410,7 +411,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
             skyQuad.name = "SkyBackdrop";
             skyQuad.transform.position = new Vector3(0f, 60f, 280f);
             skyQuad.transform.localScale = new Vector3(800f, 300f, 1f);
-            string skyTexName = LoadTexture("tex_sky_blue_gradient") != null ? "tex_sky_blue_gradient" : "tex_sky_gradient";
+            string skyTexName = LoadTexture("tex_sky_subway_blue") != null ? "tex_sky_subway_blue" :
+                                LoadTexture("tex_sky_blue_gradient") != null ? "tex_sky_blue_gradient" : "tex_sky_gradient";
             Material skyMat = CreateTexturedMaterial(skyTexName, new Color(0.5f, 0.75f, 0.95f));
             skyQuad.GetComponent<Renderer>().material = skyMat;
             Destroy(skyQuad.GetComponent<Collider>());
@@ -954,7 +956,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         CreateUIText(mainMenuPanel.transform, "BoardTitle", "HOVERBOARD",
             new Vector2(0f, -340f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
 
-        CreateUIText(mainMenuPanel.transform, "VersionText", "v4.0 Phase 3 - Curved World + Hi-Res",
+        CreateUIText(mainMenuPanel.transform, "VersionText", "v5.0 Phase 15D - Subway Style",
             new Vector2(0f, -800f), 18, new Color(0.5f, 0.5f, 0.5f), FontStyle.Normal);
 
         // Phase 13: Bottom screen gradient overlay to mask curved world edge stretching
