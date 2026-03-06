@@ -56,8 +56,10 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material curbMat;
     private Material crosswalkHDMat;
 
-    // Phase 14: Curved world effect (reduced to 0.0015 to virtually eliminate edge stretching)
-    private float curvedWorldIntensity = 0.0015f;
+    // Phase 14: Curved world effect — only applied to distant segments (Z > 40)
+    // Near-camera segments stay flat to eliminate edge stretching artifacts
+    private float curvedWorldIntensity = 0.002f;
+    private float curvedWorldStartZ = 40f; // curve starts at this Z distance
 
     private Shader litShader;
     private int segmentsSpawned = 0;
@@ -1157,29 +1159,28 @@ public class SimpleTrackRunner : MonoBehaviour
         // Now handled by UpdateCurvedWorld() per-frame, but still apply initial curve at spawn
         if (segment == null) return;
         float distZ = segment.transform.position.z;
-        if (distZ > 20f)
+        if (distZ > curvedWorldStartZ)
         {
-            float drop = curvedWorldIntensity * (distZ - 20f) * (distZ - 20f);
+            float drop = curvedWorldIntensity * (distZ - curvedWorldStartZ) * (distZ - curvedWorldStartZ);
             Vector3 pos = segment.transform.position;
             pos.y -= drop;
             segment.transform.position = pos;
         }
     }
 
-    // Phase 3: Update curved-world each frame for all active segments
+    // Phase 14: Update curved-world each frame — only distant segments curve
+    // Near-camera segments (Z < curvedWorldStartZ) stay perfectly flat
     private void UpdateCurvedWorld()
     {
         for (int i = 0; i < activeSegments.Count; i++)
         {
             if (activeSegments[i] == null) continue;
-            // Reset Y first (undo previous curve), then reapply
             Vector3 pos = activeSegments[i].transform.position;
-            // We store the flat Y in the segment name won't work, so use position.z to compute
             float distZ = pos.z;
-            float flatY = 0f; // segments are spawned at Y=0
-            if (distZ > 20f)
+            float flatY = 0f;
+            if (distZ > curvedWorldStartZ)
             {
-                float drop = curvedWorldIntensity * (distZ - 20f) * (distZ - 20f);
+                float drop = curvedWorldIntensity * (distZ - curvedWorldStartZ) * (distZ - curvedWorldStartZ);
                 pos.y = flatY - drop;
             }
             else
@@ -1196,14 +1197,10 @@ public class SimpleTrackRunner : MonoBehaviour
             Vector3 pos = activeObstacles[i].transform.position;
             float distZ = pos.z;
             float baseY = pos.y;
-            // Only adjust Y for far obstacles, keeping their height offset
-            if (distZ > 20f)
+            if (distZ > curvedWorldStartZ)
             {
-                float drop = curvedWorldIntensity * (distZ - 20f) * (distZ - 20f);
-                // Find the nearest segment's expected Y and offset accordingly
-                float segY = -drop;
-                // We store obstacles at ground-relative heights, so just apply the curve
-                pos.y = baseY - drop * 0.3f; // partial curve for obstacles (less aggressive)
+                float drop = curvedWorldIntensity * (distZ - curvedWorldStartZ) * (distZ - curvedWorldStartZ);
+                pos.y = baseY - drop * 0.3f;
                 activeObstacles[i].transform.position = pos;
             }
         }
@@ -1214,10 +1211,10 @@ public class SimpleTrackRunner : MonoBehaviour
             if (activeCoins[i] == null) continue;
             Vector3 pos = activeCoins[i].transform.position;
             float distZ = pos.z;
-            if (distZ > 20f)
+            if (distZ > curvedWorldStartZ)
             {
-                float drop = curvedWorldIntensity * (distZ - 20f) * (distZ - 20f);
-                pos.y -= drop * 0.3f * Time.deltaTime * speed * 0.1f; // gradual curve
+                float drop = curvedWorldIntensity * (distZ - curvedWorldStartZ) * (distZ - curvedWorldStartZ);
+                pos.y -= drop * 0.3f * Time.deltaTime * speed * 0.1f;
                 activeCoins[i].transform.position = pos;
             }
         }
