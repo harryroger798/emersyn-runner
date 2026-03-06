@@ -302,13 +302,16 @@ public class SimpleTrackRunner : MonoBehaviour
         // Phase 15G: Use rooftop detail texture, fallback to solid color
         rooftopMat = CreateTexturedMaterial("tex_rooftop_detail", new Color(0.45f, 0.45f, 0.48f));
         if (rooftopMat.mainTexture == null) rooftopMat = CreateColorMaterial(new Color(0.45f, 0.45f, 0.48f));
-        // Phase 15E: Use detailed subway tunnel wall texture (Modal SDXL), fallback to Phase 15C gradient
-        tunnelMat = CreateTexturedMaterial("tex_tunnel_wall_subway", new Color(0.25f, 0.25f, 0.28f));
+        // Phase 15I: Use clean PIL tunnel wall texture (UV-safe for cubes), fallback chain
+        tunnelMat = CreateTexturedMaterial("tex_tunnel_wall_clean", new Color(0.25f, 0.25f, 0.28f));
+        if (tunnelMat.mainTexture == null) tunnelMat = CreateTexturedMaterial("tex_tunnel_wall_subway", new Color(0.25f, 0.25f, 0.28f));
         if (tunnelMat.mainTexture == null) tunnelMat = CreateTexturedMaterial("tex_tunnel_interior_clean", new Color(0.25f, 0.25f, 0.28f));
 
-        // Phase 15E: New environment materials
-        overpassMat = CreateTexturedMaterial("tex_overpass_concrete", new Color(0.5f, 0.5f, 0.52f));
-        brickWallMat = CreateTexturedMaterial("tex_wall_brick_detail", new Color(0.6f, 0.35f, 0.25f));
+        // Phase 15I: Clean PIL environment materials (UV-safe for cubes)
+        overpassMat = CreateTexturedMaterial("tex_overpass_clean", new Color(0.5f, 0.5f, 0.52f));
+        if (overpassMat.mainTexture == null) overpassMat = CreateTexturedMaterial("tex_overpass_concrete", new Color(0.5f, 0.5f, 0.52f));
+        brickWallMat = CreateTexturedMaterial("tex_brick_wall_clean", new Color(0.6f, 0.35f, 0.25f));
+        if (brickWallMat.mainTexture == null) brickWallMat = CreateTexturedMaterial("tex_wall_brick_detail", new Color(0.6f, 0.35f, 0.25f));
         chainlinkMat = CreateTexturedMaterial("tex_fence_chainlink", new Color(0.6f, 0.6f, 0.6f));
 
         // Phase 15E: Ground detail materials
@@ -1071,7 +1074,9 @@ public class SimpleTrackRunner : MonoBehaviour
                 obs = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 obs.transform.localScale = new Vector3(0.5f, 1f, 0.5f);
                 obs.transform.position += Vector3.up * 0.5f;
-                obs.GetComponent<Renderer>().material = coneMat;
+                // Phase 15I: Use clean cone texture
+                Material cleanConeMat = CreateTexturedMaterial("tex_cone_clean", new Color(0.9f, 0.5f, 0.1f));
+                obs.GetComponent<Renderer>().material = cleanConeMat.mainTexture != null ? cleanConeMat : coneMat;
                 break;
 
             case 4: // Wide barrier
@@ -1083,7 +1088,9 @@ public class SimpleTrackRunner : MonoBehaviour
 
             case 5: // Phase 15F: Enhanced train with subway side texture overlay
                 obs = new GameObject("Train");
-                Material selectedTrainMat = trainVariantMats[Random.Range(0, trainVariantMats.Length)];
+                // Phase 15I: Use clean train car texture, fallback to variant
+                Material cleanTrainMat = CreateTexturedMaterial("tex_train_car_clean", new Color(0.4f, 0.5f, 0.7f));
+                Material selectedTrainMat = cleanTrainMat.mainTexture != null ? cleanTrainMat : trainVariantMats[Random.Range(0, trainVariantMats.Length)];
                 Material graffitiSideMat = CreateTexturedMaterial("tex_train_graffiti_side_hd", new Color(0.4f, 0.4f, 0.5f));
                 int trainCars = Random.Range(3, 6); // 3-5 cars
                 for (int c = 0; c < trainCars; c++)
@@ -1155,7 +1162,9 @@ public class SimpleTrackRunner : MonoBehaviour
                 obs = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 obs.transform.localScale = new Vector3(1.8f, 1.4f, 1.2f);
                 obs.transform.position += Vector3.up * 0.7f;
-                obs.GetComponent<Renderer>().material = dumpsterMat;
+                // Phase 15I: Use clean dumpster texture
+                Material cleanDumpsterMat = CreateTexturedMaterial("tex_dumpster_clean", new Color(0.3f, 0.5f, 0.3f));
+                obs.GetComponent<Renderer>().material = cleanDumpsterMat.mainTexture != null ? cleanDumpsterMat : dumpsterMat;
                 break;
 
             case 9: // Phase 15F: Construction barrier with warning stripe texture
@@ -1190,7 +1199,9 @@ public class SimpleTrackRunner : MonoBehaviour
             case 10: // Phase 15F: Enhanced parked car with taxi texture option
                 obs = new GameObject("Car");
                 bool isTaxi = Random.value < 0.4f && taxiMat != null && taxiMat.mainTexture != null;
-                Material carPaintMat = isTaxi ? taxiMat : CreateTexturedMaterial("tex_car_paint_glossy", new Color(0.95f, 0.85f, 0.1f));
+                // Phase 15I: Use clean car paint texture, fallback chain
+                Material carPaintMat = isTaxi ? taxiMat : CreateTexturedMaterial("tex_car_blue_clean", new Color(0.3f, 0.5f, 0.8f));
+                if (carPaintMat.mainTexture == null) carPaintMat = CreateTexturedMaterial("tex_car_paint_glossy", new Color(0.95f, 0.85f, 0.1f));
                 if (carPaintMat.mainTexture == null) carPaintMat = carMat;
                 GameObject carBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 carBody.transform.SetParent(obs.transform);
@@ -1228,7 +1239,9 @@ public class SimpleTrackRunner : MonoBehaviour
 
             default: // Phase 15F: Enhanced bus with city bus texture
                 obs = new GameObject("Bus");
-                Material busPaintMat = cityBusMat != null && cityBusMat.mainTexture != null ? cityBusMat : CreateTexturedMaterial("tex_bus_paint_red", new Color(0.7f, 0.2f, 0.15f));
+                // Phase 15I: Use clean bus texture, fallback chain
+                Material busPaintMat = cityBusMat != null && cityBusMat.mainTexture != null ? cityBusMat : CreateTexturedMaterial("tex_bus_red_clean", new Color(0.7f, 0.2f, 0.15f));
+                if (busPaintMat.mainTexture == null) busPaintMat = CreateTexturedMaterial("tex_bus_paint_red", new Color(0.7f, 0.2f, 0.15f));
                 if (busPaintMat.mainTexture == null) busPaintMat = busMat;
                 GameObject busBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 busBody.transform.SetParent(obs.transform);
