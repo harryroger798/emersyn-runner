@@ -488,8 +488,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
         // Phase 7: Slightly taller, leaner torso for better proportions
         body.transform.localPosition = new Vector3(0f, 0.45f, 0f);
         body.transform.localScale = new Vector3(0.5f, 0.5f, 0.35f);
-        // Phase 15B: Use solid color for character body (SDXL shirt texture looked glitchy on capsule)
-        body.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.2f, 0.5f, 0.9f));
+        // Phase 15C: UV-safe gradient texture for character body
+        body.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_shirt_blue", new Color(0.2f, 0.5f, 0.9f));
         Destroy(body.GetComponent<Collider>());
         playerBody = body.transform;
 
@@ -499,8 +499,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
         // Phase 7: Slightly bigger head for cartoon feel (Subway Surfers has big heads)
         head.transform.localPosition = new Vector3(0f, 1.15f, 0f);
         head.transform.localScale = new Vector3(0.48f, 0.48f, 0.46f);
-        // Phase 15B: Use solid skin color for head (SDXL face texture looked glitchy on sphere)
-        head.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.95f, 0.8f, 0.7f));
+        // Phase 15C: UV-safe skin gradient for head
+        head.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_skin_tone", new Color(0.95f, 0.8f, 0.7f));
         Destroy(head.GetComponent<Collider>());
         playerHead = head.transform;
 
@@ -509,8 +509,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
         hair.transform.SetParent(player.transform);
         hair.transform.localPosition = new Vector3(0f, 1.28f, -0.04f);
         hair.transform.localScale = new Vector3(0.48f, 0.28f, 0.48f);
-        // Phase 15B: Use solid dark brown for hair
-        hair.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.15f, 0.05f));
+        // Phase 15C: UV-safe hair gradient
+        hair.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_hair_brown", new Color(0.3f, 0.15f, 0.05f));
         Destroy(hair.GetComponent<Collider>());
         playerHair = hair.transform;
 
@@ -541,9 +541,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
         mouth.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.8f, 0.3f, 0.3f));
         Destroy(mouth.GetComponent<Collider>());
 
-        // Phase 15B: Solid colors for character limbs
-        Material shirtMat = CreateColorMaterial(new Color(0.2f, 0.5f, 0.9f));
-        Material skinMat = CreateColorMaterial(new Color(0.95f, 0.8f, 0.7f));
+        // Phase 15C: UV-safe gradient textures for character limbs
+        Material shirtMat = CreateTexturedMaterial("tex_char_shirt_blue", new Color(0.2f, 0.5f, 0.9f));
+        Material skinMat = CreateTexturedMaterial("tex_char_skin_tone", new Color(0.95f, 0.8f, 0.7f));
 
         for (int side = -1; side <= 1; side += 2)
         {
@@ -568,9 +568,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
             else playerRightArm = arm.transform;
         }
 
-        // Phase 15B: Solid colors for pants and shoes
-        Material pantsMat = CreateColorMaterial(new Color(0.2f, 0.2f, 0.35f));
-        Material shoesMat = CreateColorMaterial(new Color(0.9f, 0.2f, 0.15f));
+        // Phase 15C: UV-safe gradient textures for pants and shoes
+        Material pantsMat = CreateTexturedMaterial("tex_char_pants_dark", new Color(0.2f, 0.2f, 0.35f));
+        Material shoesMat = CreateTexturedMaterial("tex_char_shoes_red", new Color(0.9f, 0.2f, 0.15f));
 
         for (int side = -1; side <= 1; side += 2)
         {
@@ -600,8 +600,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
         backpack.transform.SetParent(player.transform);
         backpack.transform.localPosition = new Vector3(0f, 0.45f, -0.25f);
         backpack.transform.localScale = new Vector3(0.35f, 0.4f, 0.2f);
-        // Phase 15B: Solid orange backpack
-        backpack.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.9f, 0.4f, 0.1f));
+        // Phase 15C: UV-safe backpack gradient
+        backpack.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_backpack_orange", new Color(0.9f, 0.4f, 0.1f));
         Destroy(backpack.GetComponent<Collider>());
 
         ApplyOutfit(selectedOutfit);
@@ -682,26 +682,27 @@ public class RuntimeSceneBuilder : MonoBehaviour
         outfitIdx = Mathf.Clamp(outfitIdx, 0, outfitTextures.Length - 1);
         Color[] fallbacks = outfitFallbacks[outfitIdx];
 
-        // Phase 15B: Use solid colors for all outfit parts (SDXL textures look glitchy on primitives)
+        // Phase 15C: Use UV-safe gradient textures for outfit (PIL-generated, clean on primitives)
+        string[] texNames = outfitTextures[outfitIdx];
         // Body/shirt
         if (playerBody != null)
-            playerBody.GetComponent<Renderer>().material = CreateColorMaterial(fallbacks[0]);
+            playerBody.GetComponent<Renderer>().material = CreateTexturedMaterial(texNames[0], fallbacks[0]);
 
         // Arms match shirt
         if (playerLeftArm != null)
-            playerLeftArm.GetComponent<Renderer>().material = CreateColorMaterial(fallbacks[0]);
+            playerLeftArm.GetComponent<Renderer>().material = CreateTexturedMaterial(texNames[0], fallbacks[0]);
         if (playerRightArm != null)
-            playerRightArm.GetComponent<Renderer>().material = CreateColorMaterial(fallbacks[0]);
+            playerRightArm.GetComponent<Renderer>().material = CreateTexturedMaterial(texNames[0], fallbacks[0]);
 
         // Pants
-        Material pantsMat = CreateColorMaterial(fallbacks[1]);
+        Material pantsMat = CreateTexturedMaterial(texNames[1], fallbacks[1]);
         if (playerLeftLeg != null)
             playerLeftLeg.GetComponent<Renderer>().material = pantsMat;
         if (playerRightLeg != null)
             playerRightLeg.GetComponent<Renderer>().material = pantsMat;
 
         // Shoes
-        Material shoesMat = CreateColorMaterial(fallbacks[2]);
+        Material shoesMat = CreateTexturedMaterial(texNames[2], fallbacks[2]);
         foreach (Transform child in playerLeftLeg != null ? playerLeftLeg : player.transform)
         {
             if (child.name == "Shoe") child.GetComponent<Renderer>().material = shoesMat;

@@ -159,17 +159,16 @@ public class SimpleTrackRunner : MonoBehaviour
         grassMat = CreateTexturedMaterialTiled("tex_grass_dark_green", new Color(0.15f, 0.3f, 0.15f), 4f, 4f);
         if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_ground_dark_fill", new Color(0.25f, 0.25f, 0.28f), 4f, 4f);
         if (grassMat.mainTexture == null) grassMat = CreateColorMaterial(new Color(0.2f, 0.3f, 0.2f));
-        // Phase 15B: Clean solid-color materials for obstacles (SDXL textures look glitchy on 3D primitives)
-        barrierMat = CreateColorMaterial(new Color(0.9f, 0.15f, 0.1f));
-        // Phase 15B: Clean solid-color materials for all 3D obstacle/prop primitives
-        trainMat = CreateColorMaterial(new Color(0.3f, 0.35f, 0.7f));
-        coneMat = CreateColorMaterial(new Color(1f, 0.5f, 0f));
+        // Phase 15C: UV-safe gradient textures for obstacles (PIL-generated, clean on primitives)
+        barrierMat = CreateTexturedMaterial("tex_obstacle_barrier_clean", new Color(0.9f, 0.15f, 0.1f));
+        trainMat = CreateTexturedMaterial("tex_obstacle_train_clean", new Color(0.3f, 0.35f, 0.7f));
+        coneMat = CreateTexturedMaterial("tex_obstacle_cone_clean", new Color(1f, 0.5f, 0f));
         fenceMat = CreateColorMaterial(new Color(0.55f, 0.55f, 0.55f));
         lampMat = CreateColorMaterial(new Color(0.35f, 0.35f, 0.38f));
         graffitiMat = CreateTexturedMaterial("tex_graffiti_wall", new Color(0.6f, 0.5f, 0.5f));
 
-        // Phase 15B: Clean gold coin material (SDXL coin texture looked glitchy on cylinder primitives)
-        coinMat = CreateColorMaterial(new Color(1f, 0.85f, 0.1f));
+        // Phase 15C: UV-safe gold coin texture (PIL gradient)
+        coinMat = CreateTexturedMaterial("tex_coin_clean_gold", new Color(1f, 0.85f, 0.1f));
         if (coinMat.HasProperty("_Metallic")) coinMat.SetFloat("_Metallic", 0.8f);
         if (coinMat.HasProperty("_Smoothness")) coinMat.SetFloat("_Smoothness", 0.9f);
 
@@ -191,15 +190,15 @@ public class SimpleTrackRunner : MonoBehaviour
         crosswalkMat = CreateTexturedMaterial("tex_ground_crosswalk", new Color(0.9f, 0.9f, 0.9f));
         manholeMat = CreateTexturedMaterial("tex_ground_manhole", new Color(0.35f, 0.35f, 0.35f));
 
-        // Phase 15B: Clean solid-color prop materials (SDXL textures look glitchy on small 3D primitives)
+        // Phase 15C: UV-safe gradient textures for props (PIL-generated)
         propMats = new Material[]
         {
-            CreateColorMaterial(new Color(0.2f, 0.5f, 0.2f)),   // trashcan - green
-            CreateColorMaterial(new Color(0.45f, 0.3f, 0.15f)),  // bench - wood brown
-            CreateColorMaterial(new Color(0.2f, 0.3f, 0.7f)),    // mailbox - blue
-            CreateColorMaterial(new Color(0.8f, 0.15f, 0.1f)),   // hydrant - red
+            CreateTexturedMaterial("tex_prop_trashcan_clean", new Color(0.2f, 0.5f, 0.2f)),
+            CreateTexturedMaterial("tex_prop_bench_clean", new Color(0.45f, 0.3f, 0.15f)),
+            CreateTexturedMaterial("tex_prop_mailbox_clean", new Color(0.2f, 0.3f, 0.7f)),
+            CreateTexturedMaterial("tex_prop_hydrant_clean", new Color(0.8f, 0.15f, 0.1f)),
             CreateColorMaterial(new Color(0.7f, 0.65f, 0.1f)),   // newspaper - yellow
-            CreateColorMaterial(new Color(0.6f, 0.6f, 0.6f)),    // bollard - grey
+            CreateTexturedMaterial("tex_prop_bollard_clean", new Color(0.6f, 0.6f, 0.6f)),
             CreateColorMaterial(new Color(0.4f, 0.55f, 0.3f)),   // planter - green
             CreateColorMaterial(new Color(0.3f, 0.3f, 0.35f)),   // streetlight - dark grey
             CreateColorMaterial(new Color(0.3f, 0.4f, 0.7f)),    // vending machine - blue
@@ -212,20 +211,20 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateColorMaterial(new Color(0.3f, 0.3f, 0.3f))     // traffic light - dark grey
         };
 
-        // Phase 15B: Clean solid-color obstacle materials
-        dumpsterMat = CreateColorMaterial(new Color(0.2f, 0.45f, 0.2f));
-        constructionMat = CreateColorMaterial(new Color(0.9f, 0.5f, 0.1f));
-        carMat = CreateColorMaterial(new Color(0.95f, 0.85f, 0.1f)); // yellow taxi
-        busMat = CreateColorMaterial(new Color(0.7f, 0.2f, 0.15f));  // red bus
+        // Phase 15C: UV-safe gradient textures for obstacles
+        dumpsterMat = CreateTexturedMaterial("tex_obstacle_dumpster_clean", new Color(0.2f, 0.45f, 0.2f));
+        constructionMat = CreateTexturedMaterial("tex_obstacle_construction_clean", new Color(0.9f, 0.5f, 0.1f));
+        carMat = CreateTexturedMaterial("tex_obstacle_car_clean", new Color(0.95f, 0.85f, 0.1f));
+        busMat = CreateTexturedMaterial("tex_obstacle_bus_clean", new Color(0.7f, 0.2f, 0.15f));
 
-        // Phase 15B: Clean solid-color train variants
+        // Phase 15C: UV-safe gradient textures for train variants
         trainVariantMats = new Material[]
         {
             trainMat,
-            CreateColorMaterial(new Color(0.4f, 0.3f, 0.5f)),   // purple graffiti train
-            CreateColorMaterial(new Color(0.75f, 0.75f, 0.8f)),  // clean silver train
-            CreateColorMaterial(new Color(0.3f, 0.4f, 0.7f)),    // subway blue
-            CreateColorMaterial(new Color(0.7f, 0.25f, 0.2f))    // subway red
+            CreateTexturedMaterial("tex_train_purple_clean", new Color(0.4f, 0.3f, 0.5f)),
+            CreateTexturedMaterial("tex_train_silver_clean", new Color(0.75f, 0.75f, 0.8f)),
+            CreateTexturedMaterial("tex_train_subway_blue_clean", new Color(0.3f, 0.4f, 0.7f)),
+            CreateTexturedMaterial("tex_train_subway_red_clean", new Color(0.7f, 0.25f, 0.2f))
         };
 
         // Phase 14: Use clean asphalt for HD road (no orange markings)
@@ -279,8 +278,8 @@ public class SimpleTrackRunner : MonoBehaviour
         billboardMat1 = CreateTexturedMaterial("tex_env_billboard_1", new Color(0.6f, 0.5f, 0.9f));
         billboardMat2 = CreateTexturedMaterial("tex_env_billboard_2", new Color(0.9f, 0.5f, 0.3f));
         rooftopMat = CreateColorMaterial(new Color(0.45f, 0.45f, 0.48f));
-        // Phase 15B: Use solid dark grey for tunnel (SDXL tunnel texture created kaleidoscopic mess)
-        tunnelMat = CreateColorMaterial(new Color(0.25f, 0.25f, 0.28f));
+        // Phase 15C: UV-safe tunnel gradient texture
+        tunnelMat = CreateTexturedMaterial("tex_tunnel_interior_clean", new Color(0.25f, 0.25f, 0.28f));
     }
 
     public void StartTrack()
