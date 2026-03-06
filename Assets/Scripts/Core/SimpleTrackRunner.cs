@@ -211,7 +211,11 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_prop_phone_booth", new Color(0.8f, 0.2f, 0.15f)),
             CreateTexturedMaterial("tex_prop_fire_escape", new Color(0.4f, 0.4f, 0.4f)),
             CreateTexturedMaterial("tex_prop_awning_striped", new Color(0.8f, 0.3f, 0.2f)),
-            CreateTexturedMaterial("tex_prop_potted_plant", new Color(0.3f, 0.55f, 0.25f))
+            CreateTexturedMaterial("tex_prop_potted_plant", new Color(0.3f, 0.55f, 0.25f)),
+            // Phase 11: 3 new props from Modal
+            CreateTexturedMaterial("tex_prop_food_cart", new Color(0.8f, 0.5f, 0.2f)),
+            CreateTexturedMaterial("tex_prop_bus_stop", new Color(0.5f, 0.6f, 0.7f)),
+            CreateTexturedMaterial("tex_prop_traffic_light", new Color(0.3f, 0.3f, 0.3f))
         };
 
         // Phase 8: Use HD obstacle textures from Modal with fallbacks
@@ -259,7 +263,12 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_building_skyscraper", new Color(0.4f, 0.6f, 0.8f)),
             CreateTexturedMaterial("tex_building_brick_shop", new Color(0.6f, 0.4f, 0.3f)),
             CreateTexturedMaterial("tex_building_hotel", new Color(0.7f, 0.6f, 0.5f)),
-            CreateTexturedMaterial("tex_building_gym", new Color(0.5f, 0.5f, 0.6f))
+            CreateTexturedMaterial("tex_building_gym", new Color(0.5f, 0.5f, 0.6f)),
+            // Phase 11: 4 new building types from Modal
+            CreateTexturedMaterial("tex_building_pizzeria", new Color(0.8f, 0.4f, 0.3f)),
+            CreateTexturedMaterial("tex_building_bank", new Color(0.7f, 0.7f, 0.75f)),
+            CreateTexturedMaterial("tex_building_laundromat", new Color(0.5f, 0.6f, 0.7f)),
+            CreateTexturedMaterial("tex_building_music_shop", new Color(0.6f, 0.3f, 0.6f))
         };
 
         // Phase 3: Environment details
@@ -372,8 +381,9 @@ public class SimpleTrackRunner : MonoBehaviour
             GameObject sw = GameObject.CreatePrimitive(PrimitiveType.Cube);
             sw.name = "Sidewalk";
             sw.transform.SetParent(segment.transform);
-            sw.transform.localPosition = new Vector3(side * 5.8f, -0.3f, segmentLength / 2f);
-            sw.transform.localScale = new Vector3(2f, 0.6f, segmentLength);
+            // Phase 11: Wider sidewalks (3.5 instead of 2) to cover grass gap and reduce orange streaks
+            sw.transform.localPosition = new Vector3(side * 6.2f, -0.3f, segmentLength / 2f);
+            sw.transform.localScale = new Vector3(3.5f, 0.6f, segmentLength);
             sw.GetComponent<Renderer>().material = sidewalkMat;
             Destroy(sw.GetComponent<Collider>());
 

@@ -373,7 +373,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
             Destroy(skyQuad.GetComponent<Collider>());
         }
 
-        // Phase 4: Improved clouds with better shapes and slight color variation
+        // Phase 11: Bright white clouds (fixed grey cloud issue)
         for (int i = 0; i < 15; i++)
         {
             GameObject cloudGroup = new GameObject("CloudGroup_" + i);
@@ -382,10 +382,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
             float cz = Random.Range(40f, 200f);
             cloudGroup.transform.position = new Vector3(cx, cy, cz);
 
-            // Main cloud body
+            // Main cloud body - pure white, no grey tint
             int puffs = Random.Range(2, 5);
-            float warmth = Random.Range(0f, 0.04f);
-            Color cloudColor = new Color(1f, 1f - warmth, 1f - warmth * 2f, 0.9f);
+            Color cloudColor = new Color(1f, 1f, 1f, 1f);
             for (int p = 0; p < puffs; p++)
             {
                 GameObject puff = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -396,7 +395,11 @@ public class RuntimeSceneBuilder : MonoBehaviour
                 float sx = Random.Range(8f, 20f);
                 float sy = Random.Range(3f, 7f);
                 puff.transform.localScale = new Vector3(sx, sy, Random.Range(6f, 12f));
-                puff.GetComponent<Renderer>().material = CreateColorMaterial(cloudColor);
+                Material cloudMat = CreateColorMaterial(cloudColor);
+                // Force unlit/bright appearance to avoid shadow darkening
+                if (cloudMat.HasProperty("_Metallic")) cloudMat.SetFloat("_Metallic", 0f);
+                if (cloudMat.HasProperty("_Smoothness")) cloudMat.SetFloat("_Smoothness", 0f);
+                puff.GetComponent<Renderer>().material = cloudMat;
                 Destroy(puff.GetComponent<Collider>());
             }
         }
