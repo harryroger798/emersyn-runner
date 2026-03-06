@@ -56,10 +56,10 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material curbMat;
     private Material crosswalkHDMat;
 
-    // Phase 14: Curved world effect — only applied to distant segments (Z > 40)
+    // Phase 14E: Curved world effect — reduced intensity + pushed start further
     // Near-camera segments stay flat to eliminate edge stretching artifacts
-    private float curvedWorldIntensity = 0.002f;
-    private float curvedWorldStartZ = 40f; // curve starts at this Z distance
+    private float curvedWorldIntensity = 0.001f;
+    private float curvedWorldStartZ = 60f; // curve starts at this Z distance
 
     private Shader litShader;
     private int segmentsSpawned = 0;
@@ -386,13 +386,12 @@ public class SimpleTrackRunner : MonoBehaviour
         GameObject segment = new GameObject("Segment_" + segmentsSpawned);
         segment.transform.position = new Vector3(0f, 0f, nextSpawnZ);
 
-        // Road surface — use Phase 3 HD texture, lowered to avoid z-fighting
+        // Phase 14E: Extra-wide road (20 units) to fully cover screen bottom and prevent building bleed
         GameObject road = GameObject.CreatePrimitive(PrimitiveType.Cube);
         road.name = "Road";
         road.transform.SetParent(segment.transform);
         road.transform.localPosition = new Vector3(0f, -0.55f, segmentLength / 2f);
-        // Phase 13: Wider road (14 units) to fully cover gaps and eliminate orange streaks
-        road.transform.localScale = new Vector3(14f, 1f, segmentLength + 0.5f);
+        road.transform.localScale = new Vector3(20f, 1f, segmentLength + 0.5f);
         road.GetComponent<Renderer>().material = roadHDMat != null ? roadHDMat : roadMat;
         Destroy(road.GetComponent<Collider>());
 
@@ -402,10 +401,9 @@ public class SimpleTrackRunner : MonoBehaviour
             GameObject sw = GameObject.CreatePrimitive(PrimitiveType.Cube);
             sw.name = "Sidewalk";
             sw.transform.SetParent(segment.transform);
-            // Phase 13: Sidewalks positioned just outside widened road
-            // Road half-width is ~7.0; curb sits at ~7.15; sidewalk inner edge at ~7.3
-            sw.transform.localPosition = new Vector3(side * 9.3f, -0.3f, segmentLength / 2f);
-            sw.transform.localScale = new Vector3(4f, 0.6f, segmentLength);
+            // Phase 14E: Sidewalks pushed further out (road is now 20 wide)
+            sw.transform.localPosition = new Vector3(side * 12.5f, -0.3f, segmentLength / 2f);
+            sw.transform.localScale = new Vector3(5f, 0.6f, segmentLength);
             // Use dark material matching road color so curved world stretching is invisible
             Material swEdgeMat = CreateTexturedMaterial("tex_sidewalk_wide", new Color(0.4f, 0.4f, 0.42f));
             if (swEdgeMat.mainTexture == null) swEdgeMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.4f, 0.4f, 0.42f));
@@ -413,17 +411,26 @@ public class SimpleTrackRunner : MonoBehaviour
             sw.GetComponent<Renderer>().material = swEdgeMat;
             Destroy(sw.GetComponent<Collider>());
 
-            // Phase 8: Road curb between road and sidewalk
+            // Phase 14E: Curb pushed out to match wider road
             if (curbMat != null)
             {
                 GameObject curb = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 curb.name = "Curb";
                 curb.transform.SetParent(segment.transform);
-                curb.transform.localPosition = new Vector3(side * 7.2f, -0.05f, segmentLength / 2f);
+                curb.transform.localPosition = new Vector3(side * 10.1f, -0.05f, segmentLength / 2f);
                 curb.transform.localScale = new Vector3(0.3f, 0.15f, segmentLength);
                 curb.GetComponent<Renderer>().material = curbMat;
                 Destroy(curb.GetComponent<Collider>());
             }
+
+            // Phase 14E: Dark wall panel between road edge and building to block color bleed
+            GameObject wallPanel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wallPanel.name = "WallPanel";
+            wallPanel.transform.SetParent(segment.transform);
+            wallPanel.transform.localPosition = new Vector3(side * 11f, 2f, segmentLength / 2f);
+            wallPanel.transform.localScale = new Vector3(2f, 6f, segmentLength);
+            wallPanel.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.18f, 0.18f, 0.2f));
+            Destroy(wallPanel.GetComponent<Collider>());
         }
 
         // Phase 7: Thinner, subtler lane dividers (white dashed, not bright yellow)
@@ -476,8 +483,9 @@ public class SimpleTrackRunner : MonoBehaviour
                 building.transform.SetParent(segment.transform);
                 float height = Random.Range(6f, 22f);
                 float depth = Random.Range(6f, segmentLength / buildingCount);
+                // Phase 14E: Buildings pushed much further from road to prevent color bleeding
                 building.transform.localPosition = new Vector3(
-                    side * (7f + Random.Range(0f, 2f)),
+                    side * (13f + Random.Range(0f, 2f)),
                     height / 2f,
                     zOffset + depth / 2f
                 );
