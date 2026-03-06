@@ -159,26 +159,17 @@ public class SimpleTrackRunner : MonoBehaviour
         grassMat = CreateTexturedMaterialTiled("tex_grass_dark_green", new Color(0.15f, 0.3f, 0.15f), 4f, 4f);
         if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_ground_dark_fill", new Color(0.25f, 0.25f, 0.28f), 4f, 4f);
         if (grassMat.mainTexture == null) grassMat = CreateColorMaterial(new Color(0.2f, 0.3f, 0.2f));
-        // Phase 8: Use HD barrier texture from Modal
-        barrierMat = CreateTexturedMaterial("tex_obstacle_barrier_hd", new Color(0.9f, 0.2f, 0.15f));
-        if (barrierMat.mainTexture == null) barrierMat = CreateTexturedMaterial("tex_barrier_red", new Color(0.9f, 0.2f, 0.15f));
-        // Phase 8: Use HD train and cone textures from Modal
-        // Phase 10: Use train front texture from Modal
-        trainMat = CreateTexturedMaterial("tex_train_front", new Color(0.3f, 0.3f, 0.7f));
-        if (trainMat.mainTexture == null) trainMat = CreateTexturedMaterial("tex_train_side_hd", new Color(0.3f, 0.3f, 0.7f));
-        if (trainMat.mainTexture == null) trainMat = CreateTexturedMaterial("tex_train_side", new Color(0.3f, 0.3f, 0.7f));
-        coneMat = CreateTexturedMaterial("tex_obstacle_cone_hd", new Color(1f, 0.5f, 0f));
-        if (coneMat.mainTexture == null) coneMat = CreateTexturedMaterial("tex_cone_orange", new Color(1f, 0.5f, 0f));
-        // Phase 10: Use chain link fence and streetlight textures from Modal
-        fenceMat = CreateTexturedMaterial("tex_fence_chain_link", new Color(0.5f, 0.5f, 0.5f));
-        if (fenceMat.mainTexture == null) fenceMat = CreateTexturedMaterial("tex_fence_metal", new Color(0.5f, 0.5f, 0.5f));
-        lampMat = CreateTexturedMaterial("tex_streetlight_pole", new Color(0.4f, 0.4f, 0.4f));
-        if (lampMat.mainTexture == null) lampMat = CreateTexturedMaterial("tex_streetlamp", new Color(0.4f, 0.4f, 0.4f));
+        // Phase 15B: Clean solid-color materials for obstacles (SDXL textures look glitchy on 3D primitives)
+        barrierMat = CreateColorMaterial(new Color(0.9f, 0.15f, 0.1f));
+        // Phase 15B: Clean solid-color materials for all 3D obstacle/prop primitives
+        trainMat = CreateColorMaterial(new Color(0.3f, 0.35f, 0.7f));
+        coneMat = CreateColorMaterial(new Color(1f, 0.5f, 0f));
+        fenceMat = CreateColorMaterial(new Color(0.55f, 0.55f, 0.55f));
+        lampMat = CreateColorMaterial(new Color(0.35f, 0.35f, 0.38f));
         graffitiMat = CreateTexturedMaterial("tex_graffiti_wall", new Color(0.6f, 0.5f, 0.5f));
 
-        // Phase 6: Use detailed coin texture if available, fallback to gold
-        coinMat = CreateTexturedMaterial("tex_coin_detailed", new Color(1f, 0.85f, 0.1f));
-        if (coinMat.mainTexture == null) coinMat = CreateTexturedMaterial("tex_coin_gold", new Color(1f, 0.85f, 0.1f));
+        // Phase 15B: Clean gold coin material (SDXL coin texture looked glitchy on cylinder primitives)
+        coinMat = CreateColorMaterial(new Color(1f, 0.85f, 0.1f));
         if (coinMat.HasProperty("_Metallic")) coinMat.SetFloat("_Metallic", 0.8f);
         if (coinMat.HasProperty("_Smoothness")) coinMat.SetFloat("_Smoothness", 0.9f);
 
@@ -200,48 +191,41 @@ public class SimpleTrackRunner : MonoBehaviour
         crosswalkMat = CreateTexturedMaterial("tex_ground_crosswalk", new Color(0.9f, 0.9f, 0.9f));
         manholeMat = CreateTexturedMaterial("tex_ground_manhole", new Color(0.35f, 0.35f, 0.35f));
 
-        // Phase 9: Expanded props array with new Modal textures
+        // Phase 15B: Clean solid-color prop materials (SDXL textures look glitchy on small 3D primitives)
         propMats = new Material[]
         {
-            CreateTexturedMaterial("tex_prop_trashcan", new Color(0.2f, 0.5f, 0.2f)),
-            CreateTexturedMaterial("tex_prop_bench", new Color(0.45f, 0.3f, 0.15f)),
-            CreateTexturedMaterial("tex_prop_mailbox", new Color(0.2f, 0.3f, 0.7f)),
-            CreateTexturedMaterial("tex_prop_hydrant", new Color(0.8f, 0.15f, 0.1f)),
-            CreateTexturedMaterial("tex_prop_newspaper", new Color(0.7f, 0.65f, 0.1f)),
-            CreateTexturedMaterial("tex_prop_bollard", new Color(0.6f, 0.6f, 0.6f)),
-            CreateTexturedMaterial("tex_prop_planter", new Color(0.4f, 0.55f, 0.3f)),
-            CreateTexturedMaterial("tex_prop_streetlight", new Color(0.3f, 0.3f, 0.35f)),
-            CreateTexturedMaterial("tex_prop_vending_machine", new Color(0.3f, 0.4f, 0.7f)),
-            CreateTexturedMaterial("tex_prop_phone_booth", new Color(0.8f, 0.2f, 0.15f)),
-            CreateTexturedMaterial("tex_prop_fire_escape", new Color(0.4f, 0.4f, 0.4f)),
-            CreateTexturedMaterial("tex_prop_awning_striped", new Color(0.8f, 0.3f, 0.2f)),
-            CreateTexturedMaterial("tex_prop_potted_plant", new Color(0.3f, 0.55f, 0.25f)),
-            // Phase 11: 3 new props from Modal
-            CreateTexturedMaterial("tex_prop_food_cart", new Color(0.8f, 0.5f, 0.2f)),
-            CreateTexturedMaterial("tex_prop_bus_stop", new Color(0.5f, 0.6f, 0.7f)),
-            CreateTexturedMaterial("tex_prop_traffic_light", new Color(0.3f, 0.3f, 0.3f))
+            CreateColorMaterial(new Color(0.2f, 0.5f, 0.2f)),   // trashcan - green
+            CreateColorMaterial(new Color(0.45f, 0.3f, 0.15f)),  // bench - wood brown
+            CreateColorMaterial(new Color(0.2f, 0.3f, 0.7f)),    // mailbox - blue
+            CreateColorMaterial(new Color(0.8f, 0.15f, 0.1f)),   // hydrant - red
+            CreateColorMaterial(new Color(0.7f, 0.65f, 0.1f)),   // newspaper - yellow
+            CreateColorMaterial(new Color(0.6f, 0.6f, 0.6f)),    // bollard - grey
+            CreateColorMaterial(new Color(0.4f, 0.55f, 0.3f)),   // planter - green
+            CreateColorMaterial(new Color(0.3f, 0.3f, 0.35f)),   // streetlight - dark grey
+            CreateColorMaterial(new Color(0.3f, 0.4f, 0.7f)),    // vending machine - blue
+            CreateColorMaterial(new Color(0.8f, 0.2f, 0.15f)),   // phone booth - red
+            CreateColorMaterial(new Color(0.4f, 0.4f, 0.4f)),    // fire escape - grey
+            CreateColorMaterial(new Color(0.8f, 0.3f, 0.2f)),    // awning - red-orange
+            CreateColorMaterial(new Color(0.3f, 0.55f, 0.25f)),  // potted plant - green
+            CreateColorMaterial(new Color(0.8f, 0.5f, 0.2f)),    // food cart - orange
+            CreateColorMaterial(new Color(0.5f, 0.6f, 0.7f)),    // bus stop - steel blue
+            CreateColorMaterial(new Color(0.3f, 0.3f, 0.3f))     // traffic light - dark grey
         };
 
-        // Phase 8: Use HD obstacle textures from Modal with fallbacks
-        dumpsterMat = CreateTexturedMaterial("tex_obstacle_dumpster", new Color(0.2f, 0.45f, 0.2f));
-        constructionMat = CreateTexturedMaterial("tex_obstacle_barrier_hd", new Color(0.9f, 0.5f, 0.1f));
-        if (constructionMat.mainTexture == null) constructionMat = CreateTexturedMaterial("tex_obstacle_construction", new Color(0.9f, 0.5f, 0.1f));
-        // Phase 12: Use yellow taxi and red bus from Modal, fallback chain
-        carMat = CreateTexturedMaterial("tex_obstacle_yellow_taxi", new Color(0.9f, 0.8f, 0.1f));
-        if (carMat.mainTexture == null) carMat = CreateTexturedMaterial("tex_obstacle_car_side", new Color(0.8f, 0.7f, 0.1f));
-        busMat = CreateTexturedMaterial("tex_obstacle_red_bus", new Color(0.7f, 0.2f, 0.15f));
-        if (busMat.mainTexture == null) busMat = CreateTexturedMaterial("tex_obstacle_bus_side", new Color(0.3f, 0.4f, 0.7f));
-        if (busMat.mainTexture == null) busMat = CreateTexturedMaterial("tex_obstacle_bus", new Color(0.3f, 0.4f, 0.7f));
+        // Phase 15B: Clean solid-color obstacle materials
+        dumpsterMat = CreateColorMaterial(new Color(0.2f, 0.45f, 0.2f));
+        constructionMat = CreateColorMaterial(new Color(0.9f, 0.5f, 0.1f));
+        carMat = CreateColorMaterial(new Color(0.95f, 0.85f, 0.1f)); // yellow taxi
+        busMat = CreateColorMaterial(new Color(0.7f, 0.2f, 0.15f));  // red bus
 
-        // Phase 10: Use HD graffiti train texture from Modal
+        // Phase 15B: Clean solid-color train variants
         trainVariantMats = new Material[]
         {
             trainMat,
-            CreateTexturedMaterial("tex_train_graffiti_hd", new Color(0.4f, 0.3f, 0.5f)),
-            CreateTexturedMaterial("tex_train_clean", new Color(0.7f, 0.7f, 0.75f)),
-            // Phase 13: Subway-style train textures from Modal
-            CreateTexturedMaterial("tex_train_subway_blue", new Color(0.3f, 0.4f, 0.7f)),
-            CreateTexturedMaterial("tex_train_subway_red", new Color(0.7f, 0.25f, 0.2f))
+            CreateColorMaterial(new Color(0.4f, 0.3f, 0.5f)),   // purple graffiti train
+            CreateColorMaterial(new Color(0.75f, 0.75f, 0.8f)),  // clean silver train
+            CreateColorMaterial(new Color(0.3f, 0.4f, 0.7f)),    // subway blue
+            CreateColorMaterial(new Color(0.7f, 0.25f, 0.2f))    // subway red
         };
 
         // Phase 14: Use clean asphalt for HD road (no orange markings)
@@ -291,11 +275,12 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_building_electronics_shop", new Color(0.35f, 0.4f, 0.6f))
         };
 
-        // Phase 3: Environment details
+        // Phase 15B: Keep building textures for billboards (large flat surfaces), solid for tunnel
         billboardMat1 = CreateTexturedMaterial("tex_env_billboard_1", new Color(0.6f, 0.5f, 0.9f));
         billboardMat2 = CreateTexturedMaterial("tex_env_billboard_2", new Color(0.9f, 0.5f, 0.3f));
-        rooftopMat = CreateTexturedMaterial("tex_env_rooftop", new Color(0.5f, 0.5f, 0.5f));
-        tunnelMat = CreateTexturedMaterial("tex_env_tunnel_interior", new Color(0.3f, 0.3f, 0.35f));
+        rooftopMat = CreateColorMaterial(new Color(0.45f, 0.45f, 0.48f));
+        // Phase 15B: Use solid dark grey for tunnel (SDXL tunnel texture created kaleidoscopic mess)
+        tunnelMat = CreateColorMaterial(new Color(0.25f, 0.25f, 0.28f));
     }
 
     public void StartTrack()
