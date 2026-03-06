@@ -509,14 +509,7 @@ public class SimpleTrackRunner : MonoBehaviour
                 Destroy(curb.GetComponent<Collider>());
             }
 
-            // Phase 14E: Dark wall panel between road edge and building to block color bleed
-            GameObject wallPanel = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            wallPanel.name = "WallPanel";
-            wallPanel.transform.SetParent(segment.transform);
-            wallPanel.transform.localPosition = new Vector3(side * 11f, 2f, segmentLength / 2f);
-            wallPanel.transform.localScale = new Vector3(2f, 6f, segmentLength);
-            wallPanel.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.18f, 0.18f, 0.2f));
-            Destroy(wallPanel.GetComponent<Collider>());
+            // Phase 16B: Removed dark wall panels — they created ugly black bars on screen edges
         }
 
         // Phase 7: Thinner, subtler lane dividers (white dashed, not bright yellow)
@@ -854,32 +847,7 @@ public class SimpleTrackRunner : MonoBehaviour
             Destroy(curb.GetComponent<Collider>());
         }
 
-        // Phase 15E: Occasional overpass sections
-        if (segmentsSpawned > 2 && Random.value < 0.08f && overpassMat != null && overpassMat.mainTexture != null)
-        {
-            GameObject overpass = new GameObject("Overpass");
-            overpass.transform.SetParent(segment.transform);
-            float opZ = segmentLength / 2f;
-            // Overpass beam across road
-            GameObject beam = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            beam.name = "OverpassBeam";
-            beam.transform.SetParent(overpass.transform);
-            beam.transform.localPosition = new Vector3(0f, 7f, opZ);
-            beam.transform.localScale = new Vector3(14f, 1.5f, 4f);
-            beam.GetComponent<Renderer>().material = overpassMat;
-            Destroy(beam.GetComponent<Collider>());
-            // Support pillars
-            for (int ps = -1; ps <= 1; ps += 2)
-            {
-                GameObject pillar = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                pillar.name = "OverpassPillar";
-                pillar.transform.SetParent(overpass.transform);
-                pillar.transform.localPosition = new Vector3(ps * 6f, 3.5f, opZ);
-                pillar.transform.localScale = new Vector3(1f, 7f, 1f);
-                pillar.GetComponent<Renderer>().material = overpassMat;
-                Destroy(pillar.GetComponent<Collider>());
-            }
-        }
+        // Phase 16B: Overpasses removed — plain grey slabs looked too blocky and unpolished
 
         // Phase 15E: Brick wall sections on building sides (flat quad for SDXL texture)
         if (Random.value < 0.15f && brickWallMat != null && brickWallMat.mainTexture != null)
@@ -1140,12 +1108,25 @@ public class SimpleTrackRunner : MonoBehaviour
                 break;
             }
 
-            case 1: // Tall barrier
-                obs = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                obs.transform.localScale = new Vector3(1.5f, 2.5f, 0.5f);
-                obs.transform.position += Vector3.up * 1.25f;
-                obs.GetComponent<Renderer>().material = barrierMat;
+            case 1: // Tall barrier — Phase 16B enhanced
+            {
+                obs = new GameObject("TallBarrier");
+                // Main body
+                GameObject tbBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tbBody.transform.SetParent(obs.transform);
+                tbBody.transform.localPosition = new Vector3(0f, 1.25f, 0f);
+                tbBody.transform.localScale = new Vector3(1.5f, 2.5f, 0.5f);
+                tbBody.GetComponent<Renderer>().material = barrierMat;
+                Destroy(tbBody.GetComponent<Collider>());
+                // Yellow caution stripe
+                GameObject tbStripe = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tbStripe.transform.SetParent(obs.transform);
+                tbStripe.transform.localPosition = new Vector3(0f, 2.3f, 0.26f);
+                tbStripe.transform.localScale = new Vector3(1.51f, 0.2f, 0.01f);
+                tbStripe.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 0.8f, 0f));
+                Destroy(tbStripe.GetComponent<Collider>());
                 break;
+            }
 
             case 2: // Overhead bar
                 obs = new GameObject("Overhead");
@@ -1200,12 +1181,29 @@ public class SimpleTrackRunner : MonoBehaviour
                 break;
             }
 
-            case 4: // Wide barrier
-                obs = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                obs.transform.localScale = new Vector3(4f, 1.5f, 0.5f);
-                obs.transform.position += Vector3.up * 0.75f;
-                obs.GetComponent<Renderer>().material = barrierMat;
+            case 4: // Wide barrier — Phase 16B enhanced
+            {
+                obs = new GameObject("WideBarrier");
+                // Main body
+                GameObject wbBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                wbBody.transform.SetParent(obs.transform);
+                wbBody.transform.localPosition = new Vector3(0f, 0.75f, 0f);
+                wbBody.transform.localScale = new Vector3(4f, 1.5f, 0.5f);
+                wbBody.GetComponent<Renderer>().material = constructionMat;
+                Destroy(wbBody.GetComponent<Collider>());
+                // Yellow/black chevron stripes
+                for (int wsi = 0; wsi < 6; wsi++)
+                {
+                    GameObject wStripe = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    wStripe.transform.SetParent(obs.transform);
+                    wStripe.transform.localPosition = new Vector3(-1.5f + wsi * 0.6f, 0.75f, 0.26f);
+                    wStripe.transform.localScale = new Vector3(0.15f, 1.2f, 0.01f);
+                    wStripe.transform.localRotation = Quaternion.Euler(0f, 0f, 25f);
+                    wStripe.GetComponent<Renderer>().material = CreateColorMaterial(wsi % 2 == 0 ? new Color(1f, 0.8f, 0f) : new Color(0.15f, 0.15f, 0.15f));
+                    Destroy(wStripe.GetComponent<Collider>());
+                }
                 break;
+            }
 
             case 5: // Train — Phase 16B enhanced with windows/doors
             {
@@ -1262,14 +1260,34 @@ public class SimpleTrackRunner : MonoBehaviour
                 break;
             }
 
-            case 6: // Warning zone
-                obs = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                obs.transform.localScale = new Vector3(2f, 0.1f, 2f);
-                obs.transform.position += Vector3.up * 0.05f;
-                obs.GetComponent<Renderer>().material = coneMat;
+            case 6: // Warning zone — Phase 16B enhanced
+            {
+                obs = new GameObject("WarningZone");
+                // Base plate
+                GameObject wzBase = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                wzBase.transform.SetParent(obs.transform);
+                wzBase.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+                wzBase.transform.localScale = new Vector3(2f, 0.1f, 2f);
+                wzBase.GetComponent<Renderer>().material = coneMat;
+                Destroy(wzBase.GetComponent<Collider>());
+                // Corner cones
+                for (int cx = -1; cx <= 1; cx += 2)
+                {
+                    for (int cz = -1; cz <= 1; cz += 2)
+                    {
+                        GameObject wcone = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                        wcone.transform.SetParent(obs.transform);
+                        wcone.transform.localPosition = new Vector3(cx * 0.8f, 0.35f, cz * 0.8f);
+                        wcone.transform.localScale = new Vector3(0.15f, 0.25f, 0.15f);
+                        wcone.GetComponent<Renderer>().material = coneMat;
+                        Destroy(wcone.GetComponent<Collider>());
+                    }
+                }
                 break;
+            }
 
-            case 7: // Staggered combo
+            case 7: // Staggered combo — Phase 16B enhanced
+            {
                 obs = new GameObject("Staggered");
                 for (int s = 0; s < 2; s++)
                 {
@@ -1277,10 +1295,18 @@ public class SimpleTrackRunner : MonoBehaviour
                     piece.transform.SetParent(obs.transform);
                     piece.transform.localPosition = new Vector3(s * 1.5f - 0.75f, 0.75f, s * 1.5f);
                     piece.transform.localScale = new Vector3(1f, 1.5f, 0.5f);
-                    piece.GetComponent<Renderer>().material = barrierMat;
+                    piece.GetComponent<Renderer>().material = constructionMat;
                     Destroy(piece.GetComponent<Collider>());
+                    // Stripe on each piece
+                    GameObject sStripe = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    sStripe.transform.SetParent(piece.transform);
+                    sStripe.transform.localPosition = new Vector3(0f, 0.3f, 0.51f);
+                    sStripe.transform.localScale = new Vector3(1.01f, 0.15f, 0.01f);
+                    sStripe.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 0.8f, 0f));
+                    Destroy(sStripe.GetComponent<Collider>());
                 }
                 break;
+            }
 
             case 8: // Dumpster — Phase 16B enhanced with lid
             {
