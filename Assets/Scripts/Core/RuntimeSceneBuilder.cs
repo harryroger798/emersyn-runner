@@ -400,6 +400,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
                 if (cloudMat.HasProperty("_Metallic")) cloudMat.SetFloat("_Metallic", 0f);
                 if (cloudMat.HasProperty("_Smoothness")) cloudMat.SetFloat("_Smoothness", 0f);
                 puff.GetComponent<Renderer>().material = cloudMat;
+                // Phase 12: Disable shadow casting/receiving on clouds
+                puff.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                puff.GetComponent<Renderer>().receiveShadows = false;
                 Destroy(puff.GetComponent<Collider>());
             }
         }
@@ -449,13 +452,14 @@ public class RuntimeSceneBuilder : MonoBehaviour
             }
         }
 
+        // Phase 12: Lower grass planes well below road to prevent orange bleed-through
         for (int side = -1; side <= 1; side += 2)
         {
             GameObject grass = GameObject.CreatePrimitive(PrimitiveType.Cube);
             grass.name = "Grass";
             grass.transform.SetParent(ground.transform);
-            grass.transform.position = new Vector3(side * 15f, -0.6f, 100f);
-            grass.transform.localScale = new Vector3(18f, 0.5f, 400f);
+            grass.transform.position = new Vector3(side * 18f, -1.5f, 100f);
+            grass.transform.localScale = new Vector3(20f, 0.5f, 400f);
             grass.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_grass",
                 new Color(0.35f, 0.55f, 0.25f));
             Destroy(grass.GetComponent<Collider>());

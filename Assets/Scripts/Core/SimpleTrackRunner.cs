@@ -222,8 +222,11 @@ public class SimpleTrackRunner : MonoBehaviour
         dumpsterMat = CreateTexturedMaterial("tex_obstacle_dumpster", new Color(0.2f, 0.45f, 0.2f));
         constructionMat = CreateTexturedMaterial("tex_obstacle_barrier_hd", new Color(0.9f, 0.5f, 0.1f));
         if (constructionMat.mainTexture == null) constructionMat = CreateTexturedMaterial("tex_obstacle_construction", new Color(0.9f, 0.5f, 0.1f));
-        carMat = CreateTexturedMaterial("tex_obstacle_car_side", new Color(0.8f, 0.7f, 0.1f));
-        busMat = CreateTexturedMaterial("tex_obstacle_bus_side", new Color(0.3f, 0.4f, 0.7f));
+        // Phase 12: Use yellow taxi and red bus from Modal, fallback chain
+        carMat = CreateTexturedMaterial("tex_obstacle_yellow_taxi", new Color(0.9f, 0.8f, 0.1f));
+        if (carMat.mainTexture == null) carMat = CreateTexturedMaterial("tex_obstacle_car_side", new Color(0.8f, 0.7f, 0.1f));
+        busMat = CreateTexturedMaterial("tex_obstacle_red_bus", new Color(0.7f, 0.2f, 0.15f));
+        if (busMat.mainTexture == null) busMat = CreateTexturedMaterial("tex_obstacle_bus_side", new Color(0.3f, 0.4f, 0.7f));
         if (busMat.mainTexture == null) busMat = CreateTexturedMaterial("tex_obstacle_bus", new Color(0.3f, 0.4f, 0.7f));
 
         // Phase 10: Use HD graffiti train texture from Modal
@@ -234,8 +237,9 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_train_clean", new Color(0.7f, 0.7f, 0.75f))
         };
 
-        // Phase 8: Hi-res road texture — prefer Phase 8 HD, fallback to Phase 3
-        roadHDMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        // Phase 12: Use dark asphalt from Modal, fallback chain to Phase 8 HD
+        roadHDMat = CreateTexturedMaterialTiled("tex_road_dark_asphalt", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
+        if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
 
         // Phase 8: Road curb material
@@ -268,7 +272,11 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_building_pizzeria", new Color(0.8f, 0.4f, 0.3f)),
             CreateTexturedMaterial("tex_building_bank", new Color(0.7f, 0.7f, 0.75f)),
             CreateTexturedMaterial("tex_building_laundromat", new Color(0.5f, 0.6f, 0.7f)),
-            CreateTexturedMaterial("tex_building_music_shop", new Color(0.6f, 0.3f, 0.6f))
+            CreateTexturedMaterial("tex_building_music_shop", new Color(0.6f, 0.3f, 0.6f)),
+            // Phase 12: 3 new building types from Modal
+            CreateTexturedMaterial("tex_building_toy_store", new Color(0.8f, 0.6f, 0.9f)),
+            CreateTexturedMaterial("tex_building_coffee_shop", new Color(0.6f, 0.45f, 0.3f)),
+            CreateTexturedMaterial("tex_building_pet_shop", new Color(0.5f, 0.7f, 0.5f))
         };
 
         // Phase 3: Environment details
