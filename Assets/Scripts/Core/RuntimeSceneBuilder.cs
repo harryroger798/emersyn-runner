@@ -982,7 +982,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         CreateUIText(mainMenuPanel.transform, "BoardTitle", "HOVERBOARD",
             new Vector2(0f, -340f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
 
-        CreateUIText(mainMenuPanel.transform, "VersionText", "v5.1 Phase 15E - Enhanced Details",
+        CreateUIText(mainMenuPanel.transform, "VersionText", "v5.2 Phase 15F - Visual Polish",
             new Vector2(0f, -800f), 18, new Color(0.5f, 0.5f, 0.5f), FontStyle.Normal);
 
         // Phase 13: Bottom screen gradient overlay to mask curved world edge stretching
