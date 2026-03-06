@@ -235,18 +235,19 @@ public class SimpleTrackRunner : MonoBehaviour
         if (coinMat.HasProperty("_Metallic")) coinMat.SetFloat("_Metallic", 0.8f);
         if (coinMat.HasProperty("_Smoothness")) coinMat.SetFloat("_Smoothness", 0.9f);
 
+        // Phase 16B: Use solid colors for building base materials (SDXL textures look noisy on 3D cubes)
         buildingMats = new Material[]
         {
-            CreateTexturedMaterial("tex_building_red", new Color(0.7f, 0.4f, 0.35f)),
-            CreateTexturedMaterial("tex_building_blue", new Color(0.35f, 0.45f, 0.7f)),
-            CreateTexturedMaterial("tex_building_yellow", new Color(0.7f, 0.65f, 0.35f)),
-            CreateTexturedMaterial("tex_building_grey", new Color(0.55f, 0.55f, 0.55f)),
-            CreateTexturedMaterial("tex_building_pink", new Color(0.7f, 0.45f, 0.55f)),
-            CreateTexturedMaterial("tex_building_modern_glass", new Color(0.4f, 0.55f, 0.7f)),
-            CreateTexturedMaterial("tex_building_brownstone", new Color(0.5f, 0.35f, 0.25f)),
-            CreateTexturedMaterial("tex_building_shop_front", new Color(0.6f, 0.5f, 0.4f)),
-            CreateTexturedMaterial("tex_building_neon", new Color(0.3f, 0.2f, 0.5f)),
-            CreateTexturedMaterial("tex_building_graffiti", new Color(0.5f, 0.4f, 0.45f))
+            CreateColorMaterial(new Color(0.7f, 0.4f, 0.35f)),   // red brick
+            CreateColorMaterial(new Color(0.35f, 0.45f, 0.7f)),  // blue
+            CreateColorMaterial(new Color(0.7f, 0.65f, 0.35f)),  // yellow
+            CreateColorMaterial(new Color(0.55f, 0.55f, 0.55f)), // grey concrete
+            CreateColorMaterial(new Color(0.7f, 0.45f, 0.55f)),  // pink
+            CreateColorMaterial(new Color(0.4f, 0.55f, 0.7f)),   // modern glass blue
+            CreateColorMaterial(new Color(0.5f, 0.35f, 0.25f)),  // brownstone
+            CreateColorMaterial(new Color(0.6f, 0.5f, 0.4f)),    // shop front
+            CreateColorMaterial(new Color(0.3f, 0.2f, 0.5f)),    // neon purple
+            CreateColorMaterial(new Color(0.5f, 0.4f, 0.45f))    // graffiti wall
         };
 
         cobbleMat = CreateTexturedMaterial("tex_ground_cobblestone", new Color(0.45f, 0.45f, 0.4f));
@@ -1109,23 +1110,32 @@ public class SimpleTrackRunner : MonoBehaviour
 
         switch (type)
         {
-            case 0: // Low barrier — try Blender FBX first
+            case 0: // Low barrier — Phase 16B enhanced primitive
             {
-                GameObject model = LoadModel("mesh_barrier");
-                if (model != null)
+                obs = new GameObject("Barrier");
+                // Main barrier body
+                GameObject barBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                barBody.transform.SetParent(obs.transform);
+                barBody.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+                barBody.transform.localScale = new Vector3(2f, 0.8f, 0.4f);
+                barBody.GetComponent<Renderer>().material = barrierMat;
+                Destroy(barBody.GetComponent<Collider>());
+                // Stripe detail
+                GameObject stripe1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stripe1.transform.SetParent(obs.transform);
+                stripe1.transform.localPosition = new Vector3(0f, 0.6f, 0.21f);
+                stripe1.transform.localScale = new Vector3(2.01f, 0.15f, 0.01f);
+                stripe1.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 0.8f, 0f));
+                Destroy(stripe1.GetComponent<Collider>());
+                // Support legs
+                for (int bl = -1; bl <= 1; bl += 2)
                 {
-                    obs = model;
-                    obs.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
-                    obs.transform.position += Vector3.up * 0.5f;
-                    ApplyModelMaterial(obs, barrierMat);
-                    StripColliders(obs);
-                }
-                else
-                {
-                    obs = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    obs.transform.localScale = new Vector3(2f, 1f, 0.5f);
-                    obs.transform.position += Vector3.up * 0.5f;
-                    obs.GetComponent<Renderer>().material = barrierMat;
+                    GameObject leg = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    leg.transform.SetParent(obs.transform);
+                    leg.transform.localPosition = new Vector3(bl * 0.8f, 0.15f, 0f);
+                    leg.transform.localScale = new Vector3(0.08f, 0.3f, 0.3f);
+                    leg.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.4f, 0.4f, 0.4f));
+                    Destroy(leg.GetComponent<Collider>());
                 }
                 break;
             }
@@ -1156,25 +1166,37 @@ public class SimpleTrackRunner : MonoBehaviour
                 Destroy(bar.GetComponent<Collider>());
                 break;
 
-            case 3: // Cone — try Blender FBX
+            case 3: // Cone — Phase 16B enhanced
             {
-                GameObject model = LoadModel("mesh_traffic_cone");
-                if (model != null)
-                {
-                    obs = model;
-                    obs.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
-                    obs.transform.position += Vector3.up * 0.0f;
-                    ApplyModelMaterial(obs, coneMat);
-                    StripColliders(obs);
-                }
-                else
-                {
-                    obs = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    obs.transform.localScale = new Vector3(0.5f, 1f, 0.5f);
-                    obs.transform.position += Vector3.up * 0.5f;
-                    Material cleanConeMat = CreateTexturedMaterial("tex_cone_clean", new Color(0.9f, 0.5f, 0.1f));
-                    obs.GetComponent<Renderer>().material = cleanConeMat.mainTexture != null ? cleanConeMat : coneMat;
-                }
+                obs = new GameObject("Cone");
+                // Cone body (tapered cylinder)
+                GameObject coneBody = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                coneBody.transform.SetParent(obs.transform);
+                coneBody.transform.localPosition = new Vector3(0f, 0.4f, 0f);
+                coneBody.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+                coneBody.GetComponent<Renderer>().material = coneMat;
+                Destroy(coneBody.GetComponent<Collider>());
+                // Orange tip
+                GameObject coneTip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                coneTip.transform.SetParent(obs.transform);
+                coneTip.transform.localPosition = new Vector3(0f, 0.8f, 0f);
+                coneTip.transform.localScale = new Vector3(0.12f, 0.12f, 0.12f);
+                coneTip.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 0.5f, 0f));
+                Destroy(coneTip.GetComponent<Collider>());
+                // White stripe
+                GameObject coneStripe = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                coneStripe.transform.SetParent(obs.transform);
+                coneStripe.transform.localPosition = new Vector3(0f, 0.55f, 0f);
+                coneStripe.transform.localScale = new Vector3(0.32f, 0.06f, 0.32f);
+                coneStripe.GetComponent<Renderer>().material = CreateColorMaterial(Color.white);
+                Destroy(coneStripe.GetComponent<Collider>());
+                // Base
+                GameObject coneBase = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                coneBase.transform.SetParent(obs.transform);
+                coneBase.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+                coneBase.transform.localScale = new Vector3(0.5f, 0.1f, 0.5f);
+                coneBase.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.3f, 0.3f));
+                Destroy(coneBase.GetComponent<Collider>());
                 break;
             }
 
@@ -1185,56 +1207,57 @@ public class SimpleTrackRunner : MonoBehaviour
                 obs.GetComponent<Renderer>().material = barrierMat;
                 break;
 
-            case 5: // Train — try Blender FBX
+            case 5: // Train — Phase 16B enhanced with windows/doors
             {
-                string trainModel = Random.value < 0.5f ? "mesh_subway_train" : "mesh_train_red";
-                GameObject model = LoadModel(trainModel);
-                if (model != null)
+                obs = new GameObject("Train");
+                Material selectedTrainMat = trainVariantMats[Random.Range(0, trainVariantMats.Length)];
+                int trainCars = Random.Range(3, 6);
+                for (int c = 0; c < trainCars; c++)
                 {
-                    obs = new GameObject("Train");
-                    int trainCars = Random.Range(3, 6);
-                    for (int c = 0; c < trainCars; c++)
+                    GameObject tcar = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    tcar.transform.SetParent(obs.transform);
+                    tcar.transform.localPosition = new Vector3(0f, 1.2f, c * 2.2f);
+                    tcar.transform.localScale = new Vector3(1.8f, 2.2f, 2f);
+                    tcar.GetComponent<Renderer>().material = selectedTrainMat;
+                    Destroy(tcar.GetComponent<Collider>());
+                    // Door
+                    GameObject door = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    door.transform.SetParent(tcar.transform);
+                    door.transform.localPosition = new Vector3(-0.51f, -0.1f, 0f);
+                    door.transform.localScale = new Vector3(0.02f, 0.6f, 0.25f);
+                    door.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.5f, 0.5f, 0.55f));
+                    Destroy(door.GetComponent<Collider>());
+                    // Windows on each side
+                    for (int ws = -1; ws <= 1; ws += 2)
                     {
-                        GameObject car = LoadModel(trainModel);
-                        if (car != null)
-                        {
-                            car.transform.SetParent(obs.transform);
-                            car.transform.localPosition = new Vector3(0f, 0f, c * 4.5f);
-                            car.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
-                            Material selectedTrainMat = trainVariantMats[Random.Range(0, trainVariantMats.Length)];
-                            ApplyModelMaterial(car, selectedTrainMat);
-                            StripColliders(car);
-                        }
+                        GameObject win = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        win.transform.SetParent(tcar.transform);
+                        win.transform.localPosition = new Vector3(ws * 0.51f, 0.1f, 0.25f);
+                        win.transform.localScale = new Vector3(0.02f, 0.35f, 0.3f);
+                        win.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.6f, 0.78f, 0.95f));
+                        Destroy(win.GetComponent<Collider>());
                     }
-                    Destroy(model); // destroy the initial test load
                 }
-                else
+                // Roof
+                GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                roof.transform.SetParent(obs.transform);
+                roof.transform.localPosition = new Vector3(0f, 2.4f, (trainCars - 1) * 1.1f);
+                roof.transform.localScale = new Vector3(1.9f, 0.2f, trainCars * 2.2f + 0.3f);
+                roof.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.3f, 0.35f));
+                Destroy(roof.GetComponent<Collider>());
+                // Wheels
+                for (int wside = -1; wside <= 1; wside += 2)
                 {
-                    obs = new GameObject("Train");
-                    Material cleanTrainMat = CreateTexturedMaterial("tex_train_car_clean", new Color(0.4f, 0.5f, 0.7f));
-                    Material selectedTrainMat = cleanTrainMat.mainTexture != null ? cleanTrainMat : trainVariantMats[Random.Range(0, trainVariantMats.Length)];
-                    int trainCars = Random.Range(3, 6);
-                    for (int c = 0; c < trainCars; c++)
+                    for (int wc = 0; wc < trainCars; wc++)
                     {
-                        GameObject tcar = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        tcar.transform.SetParent(obs.transform);
-                        tcar.transform.localPosition = new Vector3(0f, 1.2f, c * 2.2f);
-                        tcar.transform.localScale = new Vector3(1.8f, 2.2f, 2f);
-                        tcar.GetComponent<Renderer>().material = selectedTrainMat;
-                        Destroy(tcar.GetComponent<Collider>());
-                        GameObject door = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        door.transform.SetParent(tcar.transform);
-                        door.transform.localPosition = new Vector3(-0.51f, -0.1f, 0f);
-                        door.transform.localScale = new Vector3(0.02f, 0.6f, 0.25f);
-                        door.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.5f, 0.5f, 0.55f));
-                        Destroy(door.GetComponent<Collider>());
+                        GameObject tw = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                        tw.transform.SetParent(obs.transform);
+                        tw.transform.localPosition = new Vector3(wside * 0.85f, 0.15f, wc * 2.2f);
+                        tw.transform.localScale = new Vector3(0.25f, 0.08f, 0.25f);
+                        tw.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+                        tw.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.15f, 0.15f, 0.15f));
+                        Destroy(tw.GetComponent<Collider>());
                     }
-                    GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    roof.transform.SetParent(obs.transform);
-                    roof.transform.localPosition = new Vector3(0f, 2.4f, (trainCars - 1) * 1.1f);
-                    roof.transform.localScale = new Vector3(1.9f, 0.2f, trainCars * 2.2f + 0.3f);
-                    roof.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.3f, 0.35f));
-                    Destroy(roof.GetComponent<Collider>());
                 }
                 break;
             }
@@ -1259,139 +1282,194 @@ public class SimpleTrackRunner : MonoBehaviour
                 }
                 break;
 
-            case 8: // Dumpster — try Blender FBX
+            case 8: // Dumpster — Phase 16B enhanced with lid
             {
-                GameObject model = LoadModel("mesh_dumpster");
-                if (model != null)
+                obs = new GameObject("Dumpster");
+                // Main body
+                GameObject dBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                dBody.transform.SetParent(obs.transform);
+                dBody.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                dBody.transform.localScale = new Vector3(1.6f, 1.2f, 1.0f);
+                dBody.GetComponent<Renderer>().material = dumpsterMat;
+                Destroy(dBody.GetComponent<Collider>());
+                // Lid
+                GameObject dLid = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                dLid.transform.SetParent(obs.transform);
+                dLid.transform.localPosition = new Vector3(0f, 1.25f, 0f);
+                dLid.transform.localScale = new Vector3(1.7f, 0.1f, 1.1f);
+                dLid.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.25f, 0.4f, 0.25f));
+                Destroy(dLid.GetComponent<Collider>());
+                // Wheels
+                for (int dw = -1; dw <= 1; dw += 2)
                 {
-                    obs = model;
-                    obs.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-                    obs.transform.position += Vector3.up * 0.0f;
-                    ApplyModelMaterial(obs, dumpsterMat);
-                    StripColliders(obs);
-                }
-                else
-                {
-                    obs = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    obs.transform.localScale = new Vector3(1.8f, 1.4f, 1.2f);
-                    obs.transform.position += Vector3.up * 0.7f;
-                    Material cleanDumpsterMat = CreateTexturedMaterial("tex_dumpster_clean", new Color(0.3f, 0.5f, 0.3f));
-                    obs.GetComponent<Renderer>().material = cleanDumpsterMat.mainTexture != null ? cleanDumpsterMat : dumpsterMat;
+                    GameObject dWheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    dWheel.transform.SetParent(obs.transform);
+                    dWheel.transform.localPosition = new Vector3(dw * 0.65f, 0.1f, -0.4f);
+                    dWheel.transform.localScale = new Vector3(0.15f, 0.06f, 0.15f);
+                    dWheel.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+                    dWheel.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.15f, 0.15f, 0.15f));
+                    Destroy(dWheel.GetComponent<Collider>());
                 }
                 break;
             }
 
-            case 9: // Construction barrier — try Blender FBX
+            case 9: // Construction barrier — Phase 16B enhanced with stripes
             {
-                GameObject model = LoadModel("mesh_construction_barrier");
-                if (model != null)
+                obs = new GameObject("Construction");
+                GameObject cBarrier = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                cBarrier.transform.SetParent(obs.transform);
+                cBarrier.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                cBarrier.transform.localScale = new Vector3(2.5f, 1.2f, 0.3f);
+                cBarrier.GetComponent<Renderer>().material = constructionMat;
+                Destroy(cBarrier.GetComponent<Collider>());
+                // Yellow/black stripes
+                for (int si = 0; si < 4; si++)
                 {
-                    obs = model;
-                    obs.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
-                    obs.transform.position += Vector3.up * 0.0f;
-                    ApplyModelMaterial(obs, constructionMat);
-                    StripColliders(obs);
+                    GameObject cStripe = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    cStripe.transform.SetParent(obs.transform);
+                    cStripe.transform.localPosition = new Vector3(-0.8f + si * 0.55f, 0.6f, 0.16f);
+                    cStripe.transform.localScale = new Vector3(0.2f, 1.0f, 0.01f);
+                    cStripe.transform.localRotation = Quaternion.Euler(0f, 0f, 30f);
+                    cStripe.GetComponent<Renderer>().material = CreateColorMaterial(si % 2 == 0 ? new Color(1f, 0.8f, 0f) : new Color(0.15f, 0.15f, 0.15f));
+                    Destroy(cStripe.GetComponent<Collider>());
                 }
-                else
+                // Warning cones on sides
+                for (int cs = -1; cs <= 1; cs += 2)
                 {
-                    obs = new GameObject("Construction");
-                    GameObject cBarrier = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    cBarrier.transform.SetParent(obs.transform);
-                    cBarrier.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-                    cBarrier.transform.localScale = new Vector3(2.5f, 1.2f, 0.3f);
-                    cBarrier.GetComponent<Renderer>().material = constructionBarrierMat != null && constructionBarrierMat.mainTexture != null ? constructionBarrierMat : constructionMat;
-                    Destroy(cBarrier.GetComponent<Collider>());
-                    for (int cs = -1; cs <= 1; cs += 2)
+                    GameObject cone2 = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    cone2.transform.SetParent(obs.transform);
+                    cone2.transform.localPosition = new Vector3(cs * 1.4f, 0.4f, 0f);
+                    cone2.transform.localScale = new Vector3(0.3f, 0.4f, 0.3f);
+                    cone2.GetComponent<Renderer>().material = coneMat;
+                    Destroy(cone2.GetComponent<Collider>());
+                }
+                break;
+            }
+
+            case 10: // Car — Phase 16B enhanced with windshield/headlights
+            {
+                obs = new GameObject("Car");
+                bool isTaxi = Random.value < 0.5f;
+                Material carPaintMat = isTaxi ? CreateColorMaterial(new Color(0.95f, 0.85f, 0.1f)) : CreateColorMaterial(new Color(0.3f, 0.5f, 0.8f));
+                // Body
+                GameObject carBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                carBody.transform.SetParent(obs.transform);
+                carBody.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                carBody.transform.localScale = new Vector3(1.6f, 1.0f, 3.0f);
+                carBody.GetComponent<Renderer>().material = carPaintMat;
+                Destroy(carBody.GetComponent<Collider>());
+                // Cabin/roof
+                GameObject carRoof = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                carRoof.transform.SetParent(obs.transform);
+                carRoof.transform.localPosition = new Vector3(0f, 1.3f, 0.2f);
+                carRoof.transform.localScale = new Vector3(1.4f, 0.5f, 1.5f);
+                carRoof.GetComponent<Renderer>().material = carPaintMat;
+                Destroy(carRoof.GetComponent<Collider>());
+                // Windshield
+                GameObject windshield = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                windshield.transform.SetParent(obs.transform);
+                windshield.transform.localPosition = new Vector3(0f, 1.2f, 1.15f);
+                windshield.transform.localScale = new Vector3(1.3f, 0.45f, 0.05f);
+                windshield.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.6f, 0.78f, 0.95f));
+                Destroy(windshield.GetComponent<Collider>());
+                // Headlights
+                for (int hl = -1; hl <= 1; hl += 2)
+                {
+                    GameObject headlight = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    headlight.transform.SetParent(obs.transform);
+                    headlight.transform.localPosition = new Vector3(hl * 0.55f, 0.65f, 1.51f);
+                    headlight.transform.localScale = new Vector3(0.2f, 0.15f, 0.08f);
+                    headlight.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 0.95f, 0.7f));
+                    Destroy(headlight.GetComponent<Collider>());
+                }
+                // Taillights
+                for (int tl = -1; tl <= 1; tl += 2)
+                {
+                    GameObject taillight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    taillight.transform.SetParent(obs.transform);
+                    taillight.transform.localPosition = new Vector3(tl * 0.6f, 0.65f, -1.51f);
+                    taillight.transform.localScale = new Vector3(0.18f, 0.12f, 0.04f);
+                    taillight.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.9f, 0.1f, 0.05f));
+                    Destroy(taillight.GetComponent<Collider>());
+                }
+                // Wheels
+                for (int wx = -1; wx <= 1; wx += 2)
+                {
+                    for (int wz = -1; wz <= 1; wz += 2)
                     {
-                        GameObject cone2 = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                        cone2.transform.SetParent(obs.transform);
-                        cone2.transform.localPosition = new Vector3(cs * 1.4f, 0.4f, 0f);
-                        cone2.transform.localScale = new Vector3(0.3f, 0.4f, 0.3f);
-                        cone2.GetComponent<Renderer>().material = coneMat;
-                        Destroy(cone2.GetComponent<Collider>());
+                        GameObject wheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                        wheel.transform.SetParent(obs.transform);
+                        wheel.transform.localPosition = new Vector3(wx * 0.75f, 0.2f, wz * 1.0f);
+                        wheel.transform.localScale = new Vector3(0.35f, 0.1f, 0.35f);
+                        wheel.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+                        wheel.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.15f, 0.15f, 0.15f));
+                        Destroy(wheel.GetComponent<Collider>());
+                        // Hub cap
+                        GameObject hub = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                        hub.transform.SetParent(wheel.transform);
+                        hub.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+                        hub.transform.localScale = new Vector3(0.4f, 0.15f, 0.4f);
+                        hub.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.7f, 0.7f, 0.72f));
+                        Destroy(hub.GetComponent<Collider>());
                     }
                 }
                 break;
             }
 
-            case 10: // Car — try Blender FBX (taxi or police)
+            default: // Bus — Phase 16B enhanced with windows/doors/wheels
             {
-                string carModel = Random.value < 0.5f ? "mesh_taxi_car" : "mesh_police_car";
-                GameObject model = LoadModel(carModel);
-                if (model != null)
+                obs = new GameObject("Bus");
+                Material busPaintMat = busMat;
+                // Bus body
+                GameObject busBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                busBody.transform.SetParent(obs.transform);
+                busBody.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+                busBody.transform.localScale = new Vector3(2.0f, 2.2f, 5.0f);
+                busBody.GetComponent<Renderer>().material = busPaintMat;
+                Destroy(busBody.GetComponent<Collider>());
+                // Windows on both sides
+                for (int bside = -1; bside <= 1; bside += 2)
                 {
-                    obs = model;
-                    obs.transform.localScale = new Vector3(1.3f, 1.3f, 1.3f);
-                    obs.transform.position += Vector3.up * 0.0f;
-                    Material carPaintMat = carModel == "mesh_taxi_car" ? CreateColorMaterial(new Color(0.95f, 0.85f, 0.1f)) : CreateColorMaterial(new Color(0.1f, 0.1f, 0.3f));
-                    ApplyModelMaterial(obs, carPaintMat);
-                    StripColliders(obs);
-                }
-                else
-                {
-                    obs = new GameObject("Car");
-                    bool isTaxi = Random.value < 0.4f && taxiMat != null && taxiMat.mainTexture != null;
-                    Material carPaintMat = isTaxi ? taxiMat : CreateTexturedMaterial("tex_car_blue_clean", new Color(0.3f, 0.5f, 0.8f));
-                    if (carPaintMat.mainTexture == null) carPaintMat = carMat;
-                    GameObject carBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    carBody.transform.SetParent(obs.transform);
-                    carBody.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-                    carBody.transform.localScale = new Vector3(1.6f, 1.0f, 3.0f);
-                    carBody.GetComponent<Renderer>().material = carPaintMat;
-                    Destroy(carBody.GetComponent<Collider>());
-                    GameObject carRoof = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    carRoof.transform.SetParent(obs.transform);
-                    carRoof.transform.localPosition = new Vector3(0f, 1.3f, 0.2f);
-                    carRoof.transform.localScale = new Vector3(1.4f, 0.5f, 1.5f);
-                    carRoof.GetComponent<Renderer>().material = carPaintMat;
-                    Destroy(carRoof.GetComponent<Collider>());
-                    for (int wx = -1; wx <= 1; wx += 2)
-                    {
-                        for (int wz = -1; wz <= 1; wz += 2)
-                        {
-                            GameObject wheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                            wheel.transform.SetParent(obs.transform);
-                            wheel.transform.localPosition = new Vector3(wx * 0.75f, 0.2f, wz * 1.0f);
-                            wheel.transform.localScale = new Vector3(0.35f, 0.1f, 0.35f);
-                            wheel.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
-                            wheel.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.15f, 0.15f, 0.15f));
-                            Destroy(wheel.GetComponent<Collider>());
-                        }
-                    }
-                }
-                break;
-            }
-
-            default: // Bus — try Blender FBX
-            {
-                GameObject model = LoadModel("mesh_city_bus");
-                if (model != null)
-                {
-                    obs = model;
-                    obs.transform.localScale = new Vector3(1.3f, 1.3f, 1.3f);
-                    obs.transform.position += Vector3.up * 0.0f;
-                    ApplyModelMaterial(obs, busMat);
-                    StripColliders(obs);
-                }
-                else
-                {
-                    obs = new GameObject("Bus");
-                    Material busPaintMat = cityBusMat != null && cityBusMat.mainTexture != null ? cityBusMat : busMat;
-                    GameObject busBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    busBody.transform.SetParent(obs.transform);
-                    busBody.transform.localPosition = new Vector3(0f, 1.2f, 0f);
-                    busBody.transform.localScale = new Vector3(2.0f, 2.2f, 5.0f);
-                    busBody.GetComponent<Renderer>().material = busPaintMat;
-                    Destroy(busBody.GetComponent<Collider>());
                     for (int bw = 0; bw < 4; bw++)
                     {
                         GameObject busWin = GameObject.CreatePrimitive(PrimitiveType.Cube);
                         busWin.transform.SetParent(obs.transform);
-                        busWin.transform.localPosition = new Vector3(1.01f, 1.6f, -1.5f + bw * 1.0f);
+                        busWin.transform.localPosition = new Vector3(bside * 1.01f, 1.6f, -1.5f + bw * 1.0f);
                         busWin.transform.localScale = new Vector3(0.02f, 0.6f, 0.6f);
-                        busWin.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.7f, 0.85f, 1f, 0.8f));
+                        busWin.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.6f, 0.78f, 0.95f));
                         Destroy(busWin.GetComponent<Collider>());
                     }
+                }
+                // Door
+                GameObject busDoor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                busDoor.transform.SetParent(obs.transform);
+                busDoor.transform.localPosition = new Vector3(1.01f, 0.8f, 1.0f);
+                busDoor.transform.localScale = new Vector3(0.02f, 1.4f, 0.8f);
+                busDoor.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.5f, 0.5f, 0.55f));
+                Destroy(busDoor.GetComponent<Collider>());
+                // Wheels
+                for (int bwx = -1; bwx <= 1; bwx += 2)
+                {
+                    for (int bwz = -1; bwz <= 1; bwz += 2)
+                    {
+                        GameObject busWheel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                        busWheel.transform.SetParent(obs.transform);
+                        busWheel.transform.localPosition = new Vector3(bwx * 0.95f, 0.2f, bwz * 1.6f);
+                        busWheel.transform.localScale = new Vector3(0.4f, 0.1f, 0.4f);
+                        busWheel.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+                        busWheel.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.15f, 0.15f, 0.15f));
+                        Destroy(busWheel.GetComponent<Collider>());
+                    }
+                }
+                // Headlights
+                for (int bhl = -1; bhl <= 1; bhl += 2)
+                {
+                    GameObject busHL = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    busHL.transform.SetParent(obs.transform);
+                    busHL.transform.localPosition = new Vector3(bhl * 0.7f, 0.8f, 2.51f);
+                    busHL.transform.localScale = new Vector3(0.25f, 0.2f, 0.1f);
+                    busHL.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 0.95f, 0.7f));
+                    Destroy(busHL.GetComponent<Collider>());
                 }
                 break;
             }
@@ -1413,26 +1491,24 @@ public class SimpleTrackRunner : MonoBehaviour
             float z = startZ + i * coinSpacing;
             if (z >= segStartZ + segmentLength - 5f) break;
 
-            // Phase 16: Try Blender FBX gold coin model first
+            // Phase 16B: Enhanced coin with rim detail
             Material activeCoinMat = (coinEmbossedMat != null && coinEmbossedMat.mainTexture != null) ? coinEmbossedMat : (coinShineMat != null && coinShineMat.mainTexture != null) ? coinShineMat : coinMat;
-            GameObject coin = LoadModel("mesh_gold_coin");
-            if (coin != null)
-            {
-                coin.name = "Coin";
-                coin.transform.position = new Vector3(lane * laneWidth, 1.2f, z);
-                coin.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-                ApplyModelMaterial(coin, activeCoinMat);
-                StripColliders(coin);
-            }
-            else
-            {
-                coin = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                coin.name = "Coin";
-                coin.transform.position = new Vector3(lane * laneWidth, 1.2f, z);
-                coin.transform.localScale = new Vector3(0.6f, 0.06f, 0.6f);
-                coin.GetComponent<Renderer>().material = activeCoinMat;
-                Destroy(coin.GetComponent<Collider>());
-            }
+            GameObject coin = new GameObject("Coin");
+            coin.transform.position = new Vector3(lane * laneWidth, 1.2f, z);
+            // Main disc
+            GameObject coinDisc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            coinDisc.transform.SetParent(coin.transform);
+            coinDisc.transform.localPosition = Vector3.zero;
+            coinDisc.transform.localScale = new Vector3(0.55f, 0.05f, 0.55f);
+            coinDisc.GetComponent<Renderer>().material = activeCoinMat;
+            Destroy(coinDisc.GetComponent<Collider>());
+            // Rim ring (slightly larger, darker gold)
+            GameObject coinRim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            coinRim.transform.SetParent(coin.transform);
+            coinRim.transform.localPosition = Vector3.zero;
+            coinRim.transform.localScale = new Vector3(0.62f, 0.03f, 0.62f);
+            coinRim.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.8f, 0.6f, 0.1f));
+            Destroy(coinRim.GetComponent<Collider>());
             activeCoins.Add(coin);
         }
 

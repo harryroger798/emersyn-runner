@@ -527,21 +527,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
         player = new GameObject("Player");
         player.transform.position = new Vector3(0f, groundY, 0f);
 
-        // Phase 16: Try loading Blender FBX character model
-        GameObject charModel = LoadModel("mesh_player_character");
-        if (charModel != null)
-        {
-            charModel.name = "CharacterModel";
-            charModel.transform.SetParent(player.transform);
-            charModel.transform.localPosition = new Vector3(0f, 0f, 0f);
-            charModel.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
-            // Remove all colliders from loaded model
-            foreach (Collider c in charModel.GetComponentsInChildren<Collider>())
-                Destroy(c);
-            Debug.Log("[RSB] Phase 16: Loaded Blender character model");
-        }
-
-        // Still create primitive body parts for animation (they overlay/complement the model)
+        // Phase 16B: Enhanced procedural character (Blender-style articulated body)
+        // FBX Resources.Load is unreliable in headless builds, so we build detailed primitives
         GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         body.name = "Body";
         body.transform.SetParent(player.transform);
@@ -549,9 +536,16 @@ public class RuntimeSceneBuilder : MonoBehaviour
         body.transform.localScale = new Vector3(0.5f, 0.5f, 0.35f);
         body.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_shirt_blue", new Color(0.2f, 0.5f, 0.9f));
         Destroy(body.GetComponent<Collider>());
-        // Phase 16: Hide primitive body if FBX model loaded successfully
-        if (charModel != null) body.GetComponent<Renderer>().enabled = false;
         playerBody = body.transform;
+
+        // Phase 16B: Collar detail
+        GameObject collar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        collar.name = "Collar";
+        collar.transform.SetParent(player.transform);
+        collar.transform.localPosition = new Vector3(0f, 0.78f, 0f);
+        collar.transform.localScale = new Vector3(0.25f, 0.03f, 0.18f);
+        collar.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.15f, 0.4f, 0.85f));
+        Destroy(collar.GetComponent<Collider>());
 
         GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         head.name = "Head";
@@ -560,12 +554,11 @@ public class RuntimeSceneBuilder : MonoBehaviour
         head.transform.localScale = new Vector3(0.48f, 0.48f, 0.46f);
         head.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_skin_tone", new Color(0.95f, 0.8f, 0.7f));
         Destroy(head.GetComponent<Collider>());
-        if (charModel != null) head.GetComponent<Renderer>().enabled = false;
         playerHead = head.transform;
 
         // Phase 15E: Face portrait quad on front of head (flat quad — SDXL safe)
         Texture2D faceTex = LoadTexture("tex_char_face_portrait");
-        if (faceTex != null && charModel == null)
+        if (faceTex != null)
         {
             GameObject faceQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             faceQuad.name = "FacePortrait";
@@ -583,37 +576,55 @@ public class RuntimeSceneBuilder : MonoBehaviour
         hair.transform.localScale = new Vector3(0.48f, 0.28f, 0.48f);
         hair.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_hair_brown", new Color(0.3f, 0.15f, 0.05f));
         Destroy(hair.GetComponent<Collider>());
-        if (charModel != null) hair.GetComponent<Renderer>().enabled = false;
         playerHair = hair.transform;
 
-        if (charModel == null)
+        // Phase 16B: Always show face details (eyes, pupils, mouth)
+        for (int side = -1; side <= 1; side += 2)
         {
-            for (int side = -1; side <= 1; side += 2)
-            {
-                GameObject eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                eye.name = "Eye";
-                eye.transform.SetParent(head.transform);
-                eye.transform.localPosition = new Vector3(side * 0.3f, 0.1f, 0.4f);
-                eye.transform.localScale = new Vector3(0.25f, 0.25f, 0.15f);
-                eye.GetComponent<Renderer>().material = CreateColorMaterial(Color.white);
-                Destroy(eye.GetComponent<Collider>());
+            GameObject eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            eye.name = "Eye";
+            eye.transform.SetParent(head.transform);
+            eye.transform.localPosition = new Vector3(side * 0.3f, 0.1f, 0.4f);
+            eye.transform.localScale = new Vector3(0.25f, 0.25f, 0.15f);
+            eye.GetComponent<Renderer>().material = CreateColorMaterial(Color.white);
+            Destroy(eye.GetComponent<Collider>());
 
-                GameObject pupil = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                pupil.name = "Pupil";
-                pupil.transform.SetParent(eye.transform);
-                pupil.transform.localPosition = new Vector3(0f, 0f, 0.35f);
-                pupil.transform.localScale = new Vector3(0.5f, 0.5f, 0.4f);
-                pupil.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.1f, 0.1f, 0.15f));
-                Destroy(pupil.GetComponent<Collider>());
-            }
+            GameObject pupil = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            pupil.name = "Pupil";
+            pupil.transform.SetParent(eye.transform);
+            pupil.transform.localPosition = new Vector3(0f, 0f, 0.35f);
+            pupil.transform.localScale = new Vector3(0.5f, 0.5f, 0.4f);
+            pupil.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.1f, 0.1f, 0.15f));
+            Destroy(pupil.GetComponent<Collider>());
+        }
 
-            GameObject mouth = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            mouth.name = "Mouth";
-            mouth.transform.SetParent(head.transform);
-            mouth.transform.localPosition = new Vector3(0f, -0.2f, 0.4f);
-            mouth.transform.localScale = new Vector3(0.25f, 0.08f, 0.1f);
-            mouth.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.8f, 0.3f, 0.3f));
-            Destroy(mouth.GetComponent<Collider>());
+        GameObject mouth = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        mouth.name = "Mouth";
+        mouth.transform.SetParent(head.transform);
+        mouth.transform.localPosition = new Vector3(0f, -0.2f, 0.4f);
+        mouth.transform.localScale = new Vector3(0.25f, 0.08f, 0.1f);
+        mouth.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.8f, 0.3f, 0.3f));
+        Destroy(mouth.GetComponent<Collider>());
+
+        // Phase 16B: Nose
+        GameObject nose = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        nose.name = "Nose";
+        nose.transform.SetParent(head.transform);
+        nose.transform.localPosition = new Vector3(0f, -0.05f, 0.45f);
+        nose.transform.localScale = new Vector3(0.12f, 0.1f, 0.12f);
+        nose.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_skin_tone", new Color(0.92f, 0.76f, 0.66f));
+        Destroy(nose.GetComponent<Collider>());
+
+        // Phase 16B: Eyebrows
+        for (int side = -1; side <= 1; side += 2)
+        {
+            GameObject brow = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            brow.name = side < 0 ? "LeftBrow" : "RightBrow";
+            brow.transform.SetParent(head.transform);
+            brow.transform.localPosition = new Vector3(side * 0.3f, 0.25f, 0.38f);
+            brow.transform.localScale = new Vector3(0.22f, 0.05f, 0.08f);
+            brow.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_hair_brown", new Color(0.25f, 0.12f, 0.05f));
+            Destroy(brow.GetComponent<Collider>());
         }
 
         // Phase 15C: UV-safe gradient textures for character limbs
@@ -629,7 +640,15 @@ public class RuntimeSceneBuilder : MonoBehaviour
             arm.transform.localScale = new Vector3(0.17f, 0.28f, 0.17f);
             arm.GetComponent<Renderer>().material = shirtMat;
             Destroy(arm.GetComponent<Collider>());
-            if (charModel != null) arm.GetComponent<Renderer>().enabled = false;
+
+            // Phase 16B: Forearm (skin-colored lower arm)
+            GameObject forearm = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            forearm.name = "Forearm";
+            forearm.transform.SetParent(arm.transform);
+            forearm.transform.localPosition = new Vector3(0f, -0.8f, 0f);
+            forearm.transform.localScale = new Vector3(0.85f, 0.6f, 0.85f);
+            forearm.GetComponent<Renderer>().material = skinMat;
+            Destroy(forearm.GetComponent<Collider>());
 
             GameObject hand = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             hand.name = "Hand";
@@ -638,7 +657,6 @@ public class RuntimeSceneBuilder : MonoBehaviour
             hand.transform.localScale = new Vector3(0.7f, 0.5f, 0.7f);
             hand.GetComponent<Renderer>().material = skinMat;
             Destroy(hand.GetComponent<Collider>());
-            if (charModel != null) hand.GetComponent<Renderer>().enabled = false;
 
             if (side < 0) playerLeftArm = arm.transform;
             else playerRightArm = arm.transform;
@@ -656,7 +674,15 @@ public class RuntimeSceneBuilder : MonoBehaviour
             leg.transform.localScale = new Vector3(0.22f, 0.32f, 0.22f);
             leg.GetComponent<Renderer>().material = pantsMat;
             Destroy(leg.GetComponent<Collider>());
-            if (charModel != null) leg.GetComponent<Renderer>().enabled = false;
+
+            // Phase 16B: Shin (lower leg)
+            GameObject shin = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            shin.name = "Shin";
+            shin.transform.SetParent(leg.transform);
+            shin.transform.localPosition = new Vector3(0f, -0.7f, 0f);
+            shin.transform.localScale = new Vector3(0.8f, 0.5f, 0.8f);
+            shin.GetComponent<Renderer>().material = pantsMat;
+            Destroy(shin.GetComponent<Collider>());
 
             GameObject shoe = GameObject.CreatePrimitive(PrimitiveType.Cube);
             shoe.name = "Shoe";
@@ -665,7 +691,6 @@ public class RuntimeSceneBuilder : MonoBehaviour
             shoe.transform.localScale = new Vector3(0.8f, 0.4f, 1.5f);
             shoe.GetComponent<Renderer>().material = shoesMat;
             Destroy(shoe.GetComponent<Collider>());
-            if (charModel != null) shoe.GetComponent<Renderer>().enabled = false;
 
             if (side < 0) playerLeftLeg = leg.transform;
             else playerRightLeg = leg.transform;
@@ -678,10 +703,22 @@ public class RuntimeSceneBuilder : MonoBehaviour
         backpack.transform.localScale = new Vector3(0.35f, 0.4f, 0.2f);
         backpack.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_backpack_orange", new Color(0.9f, 0.4f, 0.1f));
         Destroy(backpack.GetComponent<Collider>());
-        if (charModel != null) backpack.GetComponent<Renderer>().enabled = false;
+
+        // Phase 16B: Backpack straps
+        for (int side = -1; side <= 1; side += 2)
+        {
+            GameObject strap = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            strap.name = "Strap";
+            strap.transform.SetParent(backpack.transform);
+            strap.transform.localPosition = new Vector3(side * 0.35f, 0.3f, 0.55f);
+            strap.transform.localScale = new Vector3(0.15f, 0.8f, 0.08f);
+            strap.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.7f, 0.3f, 0.05f));
+            Destroy(strap.GetComponent<Collider>());
+        }
+
         // Phase 15E: Backpack detail texture quad (SDXL on flat surface)
         Texture2D bpTex = LoadTexture("tex_char_backpack_detail");
-        if (bpTex != null && charModel == null)
+        if (bpTex != null)
         {
             GameObject bpQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             bpQuad.name = "BackpackDetail";
@@ -712,22 +749,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         hoverboard.transform.SetParent(player.transform);
         hoverboard.transform.localPosition = new Vector3(0f, -0.3f, 0f);
 
-        // Phase 16: Try loading Blender FBX hoverboard model
-        GameObject boardModel = LoadModel("mesh_hoverboard");
-        if (boardModel != null)
-        {
-            boardModel.name = "BoardModel";
-            boardModel.transform.SetParent(hoverboard.transform);
-            boardModel.transform.localPosition = Vector3.zero;
-            boardModel.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
-            foreach (Collider c in boardModel.GetComponentsInChildren<Collider>())
-                Destroy(c);
-            Debug.Log("[RSB] Phase 16: Loaded Blender hoverboard model");
-            hoverboard.SetActive(false);
-            return;
-        }
-
-        // Fallback: primitive hoverboard
+        // Phase 16B: Enhanced primitive hoverboard (reliable across all builds)
         GameObject deck = GameObject.CreatePrimitive(PrimitiveType.Cube);
         deck.name = "Deck";
         deck.transform.SetParent(hoverboard.transform);
@@ -1054,7 +1076,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         CreateUIText(mainMenuPanel.transform, "BoardTitle", "HOVERBOARD",
             new Vector2(0f, -340f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
 
-        CreateUIText(mainMenuPanel.transform, "VersionText", "v5.6 Phase 15J - Visual Polish",
+        CreateUIText(mainMenuPanel.transform, "VersionText", "v5.7 Phase 16B - Blender Enhanced",
             new Vector2(0f, -800f), 18, new Color(0.5f, 0.5f, 0.5f), FontStyle.Normal);
 
         // Phase 13: Bottom screen gradient overlay to mask curved world edge stretching
