@@ -395,9 +395,12 @@ public class SimpleTrackRunner : MonoBehaviour
         road.GetComponent<Renderer>().material = roadHDMat != null ? roadHDMat : roadMat;
         Destroy(road.GetComponent<Collider>());
 
-        // Sidewalks
-        for (int side = -1; side <= 1; side += 2)
+        // Phase 14I: Temporarily disable sidewalks/curbs/wall panels to isolate road streak artifacts
+        if (false)
         {
+            // Sidewalks
+            for (int side = -1; side <= 1; side += 2)
+            {
             GameObject sw = GameObject.CreatePrimitive(PrimitiveType.Cube);
             sw.name = "Sidewalk";
             sw.transform.SetParent(segment.transform);
@@ -431,6 +434,7 @@ public class SimpleTrackRunner : MonoBehaviour
             wallPanel.transform.localScale = new Vector3(2f, 6f, segmentLength);
             wallPanel.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.18f, 0.18f, 0.2f));
             Destroy(wallPanel.GetComponent<Collider>());
+        }
         }
 
         // Phase 7: Thinner, subtler lane dividers (white dashed, not bright yellow)
