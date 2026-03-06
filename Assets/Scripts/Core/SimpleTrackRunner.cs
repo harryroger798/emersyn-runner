@@ -56,6 +56,14 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material curbMat;
     private Material crosswalkHDMat;
 
+    // Phase 15E: Environment detail materials
+    private Material overpassMat;
+    private Material brickWallMat;
+    private Material chainlinkMat;
+    private Material manholeHDMat;
+    private Material drainGrateMat;
+    private Material puddleMat;
+
     // Phase 14G: Curved world DISABLED — was causing orange streak artifacts
     // The per-frame vertex manipulation stretched textures at perspective angles
     private float curvedWorldIntensity = 0f;
@@ -277,7 +285,10 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_building_sushi_bar", new Color(0.8f, 0.4f, 0.3f)),
             CreateTexturedMaterial("tex_building_comic_store", new Color(0.4f, 0.6f, 0.9f)),
             CreateTexturedMaterial("tex_building_ice_cream", new Color(0.9f, 0.7f, 0.8f)),
-            CreateTexturedMaterial("tex_building_skate_shop", new Color(0.5f, 0.7f, 0.4f))
+            CreateTexturedMaterial("tex_building_skate_shop", new Color(0.5f, 0.7f, 0.4f)),
+            // Phase 15E: 2 new emergency service buildings (Modal SDXL)
+            CreateTexturedMaterial("tex_building_police_station", new Color(0.4f, 0.5f, 0.7f)),
+            CreateTexturedMaterial("tex_building_fire_station", new Color(0.8f, 0.3f, 0.2f))
         };
 
         // Phase 15D: Use new Modal SDXL billboard textures (flat surfaces), fallback to Phase 3
@@ -286,8 +297,19 @@ public class SimpleTrackRunner : MonoBehaviour
         billboardMat2 = CreateTexturedMaterial("tex_billboard_energy_drink", new Color(0.9f, 0.5f, 0.3f));
         if (billboardMat2.mainTexture == null) billboardMat2 = CreateTexturedMaterial("tex_env_billboard_2", new Color(0.9f, 0.5f, 0.3f));
         rooftopMat = CreateColorMaterial(new Color(0.45f, 0.45f, 0.48f));
-        // Phase 15C: UV-safe tunnel gradient texture
-        tunnelMat = CreateTexturedMaterial("tex_tunnel_interior_clean", new Color(0.25f, 0.25f, 0.28f));
+        // Phase 15E: Use detailed subway tunnel wall texture (Modal SDXL), fallback to Phase 15C gradient
+        tunnelMat = CreateTexturedMaterial("tex_tunnel_wall_subway", new Color(0.25f, 0.25f, 0.28f));
+        if (tunnelMat.mainTexture == null) tunnelMat = CreateTexturedMaterial("tex_tunnel_interior_clean", new Color(0.25f, 0.25f, 0.28f));
+
+        // Phase 15E: New environment materials
+        overpassMat = CreateTexturedMaterial("tex_overpass_concrete", new Color(0.5f, 0.5f, 0.52f));
+        brickWallMat = CreateTexturedMaterial("tex_wall_brick_detail", new Color(0.6f, 0.35f, 0.25f));
+        chainlinkMat = CreateTexturedMaterial("tex_fence_chainlink", new Color(0.6f, 0.6f, 0.6f));
+
+        // Phase 15E: Ground detail materials
+        manholeHDMat = CreateTexturedMaterial("tex_ground_manhole_hd", new Color(0.35f, 0.35f, 0.35f));
+        drainGrateMat = CreateTexturedMaterial("tex_ground_drain_grate", new Color(0.4f, 0.4f, 0.4f));
+        puddleMat = CreateTexturedMaterial("tex_ground_puddle", new Color(0.5f, 0.6f, 0.7f));
     }
 
     public void StartTrack()
@@ -581,7 +603,7 @@ public class SimpleTrackRunner : MonoBehaviour
                 Destroy(lhead.GetComponent<Collider>());
             }
 
-            // Fences
+            // Phase 15E: Fences with chainlink texture quad overlay
             if (Random.value < 0.25f)
             {
                 GameObject fence = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -591,6 +613,18 @@ public class SimpleTrackRunner : MonoBehaviour
                 fence.transform.localScale = new Vector3(0.1f, 1f, segmentLength * 0.8f);
                 fence.GetComponent<Renderer>().material = fenceMat;
                 Destroy(fence.GetComponent<Collider>());
+                // Phase 15E: Chainlink texture overlay (flat quad)
+                if (chainlinkMat != null && chainlinkMat.mainTexture != null)
+                {
+                    GameObject chainQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                    chainQuad.name = "ChainlinkOverlay";
+                    chainQuad.transform.SetParent(fence.transform);
+                    chainQuad.transform.localPosition = new Vector3(-side * 0.6f, 0f, 0f);
+                    chainQuad.transform.localScale = new Vector3(12f, 1f, 1f);
+                    chainQuad.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                    chainQuad.GetComponent<Renderer>().material = chainlinkMat;
+                    Destroy(chainQuad.GetComponent<Collider>());
+                }
             }
 
             // Trash cans
@@ -707,6 +741,85 @@ public class SimpleTrackRunner : MonoBehaviour
             curb.transform.localScale = new Vector3(0.15f, 0.3f, segmentLength);
             curb.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.3f, 0.32f));
             Destroy(curb.GetComponent<Collider>());
+        }
+
+        // Phase 15E: Occasional overpass sections
+        if (segmentsSpawned > 2 && Random.value < 0.08f && overpassMat != null && overpassMat.mainTexture != null)
+        {
+            GameObject overpass = new GameObject("Overpass");
+            overpass.transform.SetParent(segment.transform);
+            float opZ = segmentLength / 2f;
+            // Overpass beam across road
+            GameObject beam = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            beam.name = "OverpassBeam";
+            beam.transform.SetParent(overpass.transform);
+            beam.transform.localPosition = new Vector3(0f, 7f, opZ);
+            beam.transform.localScale = new Vector3(14f, 1.5f, 4f);
+            beam.GetComponent<Renderer>().material = overpassMat;
+            Destroy(beam.GetComponent<Collider>());
+            // Support pillars
+            for (int ps = -1; ps <= 1; ps += 2)
+            {
+                GameObject pillar = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                pillar.name = "OverpassPillar";
+                pillar.transform.SetParent(overpass.transform);
+                pillar.transform.localPosition = new Vector3(ps * 6f, 3.5f, opZ);
+                pillar.transform.localScale = new Vector3(1f, 7f, 1f);
+                pillar.GetComponent<Renderer>().material = overpassMat;
+                Destroy(pillar.GetComponent<Collider>());
+            }
+        }
+
+        // Phase 15E: Brick wall sections on building sides (flat quad for SDXL texture)
+        if (Random.value < 0.15f && brickWallMat != null && brickWallMat.mainTexture != null)
+        {
+            int brickSide = Random.value < 0.5f ? -1 : 1;
+            GameObject brickWall = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            brickWall.name = "BrickWall";
+            brickWall.transform.SetParent(segment.transform);
+            brickWall.transform.localPosition = new Vector3(brickSide * 12f, 4f, segmentLength / 2f);
+            brickWall.transform.localScale = new Vector3(8f, 8f, 1f);
+            brickWall.transform.localRotation = Quaternion.Euler(0f, brickSide > 0 ? -90f : 90f, 0f);
+            brickWall.GetComponent<Renderer>().material = brickWallMat;
+            Destroy(brickWall.GetComponent<Collider>());
+        }
+
+        // Phase 15E: Ground details (manholes, drain grates, puddles) — flat quads on road
+        if (Random.value < 0.2f && manholeHDMat != null && manholeHDMat.mainTexture != null)
+        {
+            GameObject manhole = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            manhole.name = "ManholeHD";
+            manhole.transform.SetParent(segment.transform);
+            int mhLane = Random.Range(-1, 2);
+            manhole.transform.localPosition = new Vector3(mhLane * laneWidth, 0.06f, Random.Range(5f, segmentLength - 5f));
+            manhole.transform.localScale = new Vector3(1.2f, 1.2f, 1f);
+            manhole.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            manhole.GetComponent<Renderer>().material = manholeHDMat;
+            Destroy(manhole.GetComponent<Collider>());
+        }
+        if (Random.value < 0.15f && drainGrateMat != null && drainGrateMat.mainTexture != null)
+        {
+            GameObject drain = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            drain.name = "DrainGrate";
+            drain.transform.SetParent(segment.transform);
+            int drSide = Random.value < 0.5f ? -1 : 1;
+            drain.transform.localPosition = new Vector3(drSide * 3.5f, 0.06f, Random.Range(5f, segmentLength - 5f));
+            drain.transform.localScale = new Vector3(0.8f, 1.5f, 1f);
+            drain.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            drain.GetComponent<Renderer>().material = drainGrateMat;
+            Destroy(drain.GetComponent<Collider>());
+        }
+        if (Random.value < 0.1f && puddleMat != null && puddleMat.mainTexture != null)
+        {
+            GameObject puddle = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            puddle.name = "Puddle";
+            puddle.transform.SetParent(segment.transform);
+            int pdLane = Random.Range(-1, 2);
+            puddle.transform.localPosition = new Vector3(pdLane * laneWidth, 0.07f, Random.Range(5f, segmentLength - 5f));
+            puddle.transform.localScale = new Vector3(1.5f, 2f, 1f);
+            puddle.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            puddle.GetComponent<Renderer>().material = puddleMat;
+            Destroy(puddle.GetComponent<Collider>());
         }
 
         // Phase 3: Tunnel sections (occasional)

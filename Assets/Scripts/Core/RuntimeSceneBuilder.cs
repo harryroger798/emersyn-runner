@@ -506,6 +506,19 @@ public class RuntimeSceneBuilder : MonoBehaviour
         Destroy(head.GetComponent<Collider>());
         playerHead = head.transform;
 
+        // Phase 15E: Face portrait quad on front of head (flat quad — SDXL safe)
+        Texture2D faceTex = LoadTexture("tex_char_face_portrait");
+        if (faceTex != null)
+        {
+            GameObject faceQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            faceQuad.name = "FacePortrait";
+            faceQuad.transform.SetParent(head.transform);
+            faceQuad.transform.localPosition = new Vector3(0f, 0f, 0.52f);
+            faceQuad.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
+            faceQuad.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_face_portrait", new Color(0.95f, 0.8f, 0.7f));
+            Destroy(faceQuad.GetComponent<Collider>());
+        }
+
         GameObject hair = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         hair.name = "Hair";
         hair.transform.SetParent(player.transform);
@@ -605,6 +618,19 @@ public class RuntimeSceneBuilder : MonoBehaviour
         // Phase 15C: UV-safe backpack gradient
         backpack.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_backpack_orange", new Color(0.9f, 0.4f, 0.1f));
         Destroy(backpack.GetComponent<Collider>());
+        // Phase 15E: Backpack detail texture quad (SDXL on flat surface)
+        Texture2D bpTex = LoadTexture("tex_char_backpack_detail");
+        if (bpTex != null)
+        {
+            GameObject bpQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            bpQuad.name = "BackpackDetail";
+            bpQuad.transform.SetParent(backpack.transform);
+            bpQuad.transform.localPosition = new Vector3(0f, 0f, -0.52f);
+            bpQuad.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+            bpQuad.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            bpQuad.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_backpack_detail", new Color(0.9f, 0.4f, 0.1f));
+            Destroy(bpQuad.GetComponent<Collider>());
+        }
 
         ApplyOutfit(selectedOutfit);
 
@@ -956,7 +982,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         CreateUIText(mainMenuPanel.transform, "BoardTitle", "HOVERBOARD",
             new Vector2(0f, -340f), 18, new Color(0.7f, 0.7f, 0.7f), FontStyle.Normal);
 
-        CreateUIText(mainMenuPanel.transform, "VersionText", "v5.0 Phase 15D - Subway Style",
+        CreateUIText(mainMenuPanel.transform, "VersionText", "v5.1 Phase 15E - Enhanced Details",
             new Vector2(0f, -800f), 18, new Color(0.5f, 0.5f, 0.5f), FontStyle.Normal);
 
         // Phase 13: Bottom screen gradient overlay to mask curved world edge stretching
@@ -986,8 +1012,38 @@ public class RuntimeSceneBuilder : MonoBehaviour
         hudPanel = CreatePanel(canvasObj.transform, "HUDPanel");
         hudPanel.SetActive(false);
 
+        // Phase 15E: Score panel with Modal SDXL background texture
+        Texture2D scorePanelTex = LoadTexture("tex_ui_score_panel");
+        if (scorePanelTex != null)
+        {
+            GameObject scoreBg = new GameObject("ScorePanelBg");
+            scoreBg.transform.SetParent(hudPanel.transform, false);
+            RectTransform sbRT = scoreBg.AddComponent<RectTransform>();
+            sbRT.anchoredPosition = new Vector2(0f, 850f);
+            sbRT.sizeDelta = new Vector2(400f, 100f);
+            Image sbImg = scoreBg.AddComponent<Image>();
+            sbImg.sprite = Sprite.Create(scorePanelTex, new Rect(0, 0, scorePanelTex.width, scorePanelTex.height), new Vector2(0.5f, 0.5f));
+            sbImg.color = new Color(1f, 1f, 1f, 0.7f);
+            sbImg.raycastTarget = false;
+        }
+
         scoreText = CreateUIText(hudPanel.transform, "ScoreText", "0",
             new Vector2(0f, 850f), 64, Color.white, FontStyle.Bold);
+
+        // Phase 15E: Coin counter with golden background texture
+        Texture2D coinBgTex = LoadTexture("tex_ui_coin_counter_bg");
+        if (coinBgTex != null)
+        {
+            GameObject coinBg = new GameObject("CoinCounterBg");
+            coinBg.transform.SetParent(hudPanel.transform, false);
+            RectTransform cbRT = coinBg.AddComponent<RectTransform>();
+            cbRT.anchoredPosition = new Vector2(0f, 780f);
+            cbRT.sizeDelta = new Vector2(200f, 50f);
+            Image cbImg = coinBg.AddComponent<Image>();
+            cbImg.sprite = Sprite.Create(coinBgTex, new Rect(0, 0, coinBgTex.width, coinBgTex.height), new Vector2(0.5f, 0.5f));
+            cbImg.color = new Color(1f, 1f, 1f, 0.8f);
+            cbImg.raycastTarget = false;
+        }
 
         coinText = CreateUIText(hudPanel.transform, "CoinText", "0",
             new Vector2(0f, 780f), 32, new Color(1f, 0.85f, 0.1f), FontStyle.Bold);
