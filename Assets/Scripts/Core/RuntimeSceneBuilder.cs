@@ -141,6 +141,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
     private Font cachedFont;
     private Dictionary<string, Texture2D> loadedTextures = new Dictionary<string, Texture2D>();
     private Dictionary<string, AudioClip> loadedAudio = new Dictionary<string, AudioClip>();
+    private Dictionary<string, GameObject> loadedModels = new Dictionary<string, GameObject>();
 
     // Score animation
     private float scorePopTimer = 0f;
@@ -293,6 +294,36 @@ public class RuntimeSceneBuilder : MonoBehaviour
         return clip;
     }
 
+    // Phase 16: Load Blender FBX model from Resources/Models
+    private GameObject LoadModel(string modelName)
+    {
+        if (loadedModels.ContainsKey(modelName))
+        {
+            GameObject cached = loadedModels[modelName];
+            if (cached != null) return Instantiate(cached);
+        }
+
+        GameObject prefab = Resources.Load<GameObject>("Models/" + modelName);
+        if (prefab != null)
+        {
+            loadedModels[modelName] = prefab;
+            Debug.Log("[RuntimeSceneBuilder] Loaded model: " + modelName);
+            return Instantiate(prefab);
+        }
+        Debug.LogWarning("[RuntimeSceneBuilder] Model not found: " + modelName + ", using primitive fallback");
+        return null;
+    }
+
+    // Phase 16: Apply material color to all renderers in a loaded model
+    private void ApplyModelMaterial(GameObject model, Material mat)
+    {
+        Renderer[] renderers = model.GetComponentsInChildren<Renderer>();
+        foreach (Renderer r in renderers)
+        {
+            r.material = mat;
+        }
+    }
+
     private Font FindWorkingFont()
     {
         if (cachedFont != null) return cachedFont;
@@ -360,25 +391,37 @@ public class RuntimeSceneBuilder : MonoBehaviour
             if (l.type == LightType.Directional) return;
         }
 
+        // Phase 16: Enhanced 3-point lighting for Subway Surfers quality
         GameObject sunObj = new GameObject("Sun Light");
         Light sun = sunObj.AddComponent<Light>();
         sun.type = LightType.Directional;
-        sun.color = new Color(1f, 0.95f, 0.85f);
-        sun.intensity = 1.8f;
+        sun.color = new Color(1f, 0.96f, 0.88f);
+        sun.intensity = 2.0f;
         sun.shadows = LightShadows.Soft;
-        sun.shadowStrength = 0.6f;
-        sunObj.transform.eulerAngles = new Vector3(45f, -30f, 0f);
+        sun.shadowStrength = 0.5f;
+        sun.shadowBias = 0.02f;
+        sun.shadowNormalBias = 0.3f;
+        sunObj.transform.eulerAngles = new Vector3(42f, -25f, 0f);
 
         GameObject fillObj = new GameObject("Fill Light");
         Light fill = fillObj.AddComponent<Light>();
         fill.type = LightType.Directional;
-        fill.color = new Color(0.6f, 0.7f, 0.9f);
-        fill.intensity = 0.4f;
+        fill.color = new Color(0.65f, 0.75f, 0.95f);
+        fill.intensity = 0.5f;
         fill.shadows = LightShadows.None;
         fillObj.transform.eulerAngles = new Vector3(30f, 150f, 0f);
 
-        // Phase 10: Brighter ambient to reduce dark building sides
-        RenderSettings.ambientLight = new Color(0.65f, 0.7f, 0.8f);
+        // Phase 16: Rim light from behind for character pop (Subway Surfers style)
+        GameObject rimObj = new GameObject("Rim Light");
+        Light rim = rimObj.AddComponent<Light>();
+        rim.type = LightType.Directional;
+        rim.color = new Color(0.9f, 0.85f, 0.7f);
+        rim.intensity = 0.6f;
+        rim.shadows = LightShadows.None;
+        rimObj.transform.eulerAngles = new Vector3(15f, 180f, 0f);
+
+        // Phase 16: Warmer, brighter ambient for vibrant Subway Surfers feel
+        RenderSettings.ambientLight = new Color(0.72f, 0.76f, 0.85f);
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
     }
 
@@ -484,31 +527,45 @@ public class RuntimeSceneBuilder : MonoBehaviour
         player = new GameObject("Player");
         player.transform.position = new Vector3(0f, groundY, 0f);
 
+        // Phase 16: Try loading Blender FBX character model
+        GameObject charModel = LoadModel("mesh_player_character");
+        if (charModel != null)
+        {
+            charModel.name = "CharacterModel";
+            charModel.transform.SetParent(player.transform);
+            charModel.transform.localPosition = new Vector3(0f, 0f, 0f);
+            charModel.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
+            // Remove all colliders from loaded model
+            foreach (Collider c in charModel.GetComponentsInChildren<Collider>())
+                Destroy(c);
+            Debug.Log("[RSB] Phase 16: Loaded Blender character model");
+        }
+
+        // Still create primitive body parts for animation (they overlay/complement the model)
         GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         body.name = "Body";
         body.transform.SetParent(player.transform);
-        // Phase 7: Slightly taller, leaner torso for better proportions
         body.transform.localPosition = new Vector3(0f, 0.45f, 0f);
         body.transform.localScale = new Vector3(0.5f, 0.5f, 0.35f);
-        // Phase 15C: UV-safe gradient texture for character body
         body.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_shirt_blue", new Color(0.2f, 0.5f, 0.9f));
         Destroy(body.GetComponent<Collider>());
+        // Phase 16: Hide primitive body if FBX model loaded successfully
+        if (charModel != null) body.GetComponent<Renderer>().enabled = false;
         playerBody = body.transform;
 
         GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         head.name = "Head";
         head.transform.SetParent(player.transform);
-        // Phase 7: Slightly bigger head for cartoon feel (Subway Surfers has big heads)
         head.transform.localPosition = new Vector3(0f, 1.15f, 0f);
         head.transform.localScale = new Vector3(0.48f, 0.48f, 0.46f);
-        // Phase 15C: UV-safe skin gradient for head
         head.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_skin_tone", new Color(0.95f, 0.8f, 0.7f));
         Destroy(head.GetComponent<Collider>());
+        if (charModel != null) head.GetComponent<Renderer>().enabled = false;
         playerHead = head.transform;
 
         // Phase 15E: Face portrait quad on front of head (flat quad — SDXL safe)
         Texture2D faceTex = LoadTexture("tex_char_face_portrait");
-        if (faceTex != null)
+        if (faceTex != null && charModel == null)
         {
             GameObject faceQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             faceQuad.name = "FacePortrait";
@@ -524,37 +581,40 @@ public class RuntimeSceneBuilder : MonoBehaviour
         hair.transform.SetParent(player.transform);
         hair.transform.localPosition = new Vector3(0f, 1.28f, -0.04f);
         hair.transform.localScale = new Vector3(0.48f, 0.28f, 0.48f);
-        // Phase 15C: UV-safe hair gradient
         hair.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_hair_brown", new Color(0.3f, 0.15f, 0.05f));
         Destroy(hair.GetComponent<Collider>());
+        if (charModel != null) hair.GetComponent<Renderer>().enabled = false;
         playerHair = hair.transform;
 
-        for (int side = -1; side <= 1; side += 2)
+        if (charModel == null)
         {
-            GameObject eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            eye.name = "Eye";
-            eye.transform.SetParent(head.transform);
-            eye.transform.localPosition = new Vector3(side * 0.3f, 0.1f, 0.4f);
-            eye.transform.localScale = new Vector3(0.25f, 0.25f, 0.15f);
-            eye.GetComponent<Renderer>().material = CreateColorMaterial(Color.white);
-            Destroy(eye.GetComponent<Collider>());
+            for (int side = -1; side <= 1; side += 2)
+            {
+                GameObject eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                eye.name = "Eye";
+                eye.transform.SetParent(head.transform);
+                eye.transform.localPosition = new Vector3(side * 0.3f, 0.1f, 0.4f);
+                eye.transform.localScale = new Vector3(0.25f, 0.25f, 0.15f);
+                eye.GetComponent<Renderer>().material = CreateColorMaterial(Color.white);
+                Destroy(eye.GetComponent<Collider>());
 
-            GameObject pupil = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            pupil.name = "Pupil";
-            pupil.transform.SetParent(eye.transform);
-            pupil.transform.localPosition = new Vector3(0f, 0f, 0.35f);
-            pupil.transform.localScale = new Vector3(0.5f, 0.5f, 0.4f);
-            pupil.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.1f, 0.1f, 0.15f));
-            Destroy(pupil.GetComponent<Collider>());
+                GameObject pupil = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                pupil.name = "Pupil";
+                pupil.transform.SetParent(eye.transform);
+                pupil.transform.localPosition = new Vector3(0f, 0f, 0.35f);
+                pupil.transform.localScale = new Vector3(0.5f, 0.5f, 0.4f);
+                pupil.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.1f, 0.1f, 0.15f));
+                Destroy(pupil.GetComponent<Collider>());
+            }
+
+            GameObject mouth = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            mouth.name = "Mouth";
+            mouth.transform.SetParent(head.transform);
+            mouth.transform.localPosition = new Vector3(0f, -0.2f, 0.4f);
+            mouth.transform.localScale = new Vector3(0.25f, 0.08f, 0.1f);
+            mouth.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.8f, 0.3f, 0.3f));
+            Destroy(mouth.GetComponent<Collider>());
         }
-
-        GameObject mouth = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        mouth.name = "Mouth";
-        mouth.transform.SetParent(head.transform);
-        mouth.transform.localPosition = new Vector3(0f, -0.2f, 0.4f);
-        mouth.transform.localScale = new Vector3(0.25f, 0.08f, 0.1f);
-        mouth.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.8f, 0.3f, 0.3f));
-        Destroy(mouth.GetComponent<Collider>());
 
         // Phase 15C: UV-safe gradient textures for character limbs
         Material shirtMat = CreateTexturedMaterial("tex_char_shirt_blue", new Color(0.2f, 0.5f, 0.9f));
@@ -565,11 +625,11 @@ public class RuntimeSceneBuilder : MonoBehaviour
             GameObject arm = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             arm.name = side < 0 ? "LeftArm" : "RightArm";
             arm.transform.SetParent(player.transform);
-            // Phase 7: Slightly thicker arms for cartoon feel
             arm.transform.localPosition = new Vector3(side * 0.32f, 0.5f, 0f);
             arm.transform.localScale = new Vector3(0.17f, 0.28f, 0.17f);
             arm.GetComponent<Renderer>().material = shirtMat;
             Destroy(arm.GetComponent<Collider>());
+            if (charModel != null) arm.GetComponent<Renderer>().enabled = false;
 
             GameObject hand = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             hand.name = "Hand";
@@ -578,12 +638,12 @@ public class RuntimeSceneBuilder : MonoBehaviour
             hand.transform.localScale = new Vector3(0.7f, 0.5f, 0.7f);
             hand.GetComponent<Renderer>().material = skinMat;
             Destroy(hand.GetComponent<Collider>());
+            if (charModel != null) hand.GetComponent<Renderer>().enabled = false;
 
             if (side < 0) playerLeftArm = arm.transform;
             else playerRightArm = arm.transform;
         }
 
-        // Phase 15C: UV-safe gradient textures for pants and shoes
         Material pantsMat = CreateTexturedMaterial("tex_char_pants_dark", new Color(0.2f, 0.2f, 0.35f));
         Material shoesMat = CreateTexturedMaterial("tex_char_shoes_red", new Color(0.9f, 0.2f, 0.15f));
 
@@ -592,11 +652,11 @@ public class RuntimeSceneBuilder : MonoBehaviour
             GameObject leg = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             leg.name = side < 0 ? "LeftLeg" : "RightLeg";
             leg.transform.SetParent(player.transform);
-            // Phase 7: Slightly thicker legs for cartoon feel
             leg.transform.localPosition = new Vector3(side * 0.14f, -0.15f, 0f);
             leg.transform.localScale = new Vector3(0.22f, 0.32f, 0.22f);
             leg.GetComponent<Renderer>().material = pantsMat;
             Destroy(leg.GetComponent<Collider>());
+            if (charModel != null) leg.GetComponent<Renderer>().enabled = false;
 
             GameObject shoe = GameObject.CreatePrimitive(PrimitiveType.Cube);
             shoe.name = "Shoe";
@@ -605,6 +665,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
             shoe.transform.localScale = new Vector3(0.8f, 0.4f, 1.5f);
             shoe.GetComponent<Renderer>().material = shoesMat;
             Destroy(shoe.GetComponent<Collider>());
+            if (charModel != null) shoe.GetComponent<Renderer>().enabled = false;
 
             if (side < 0) playerLeftLeg = leg.transform;
             else playerRightLeg = leg.transform;
@@ -615,12 +676,12 @@ public class RuntimeSceneBuilder : MonoBehaviour
         backpack.transform.SetParent(player.transform);
         backpack.transform.localPosition = new Vector3(0f, 0.45f, -0.25f);
         backpack.transform.localScale = new Vector3(0.35f, 0.4f, 0.2f);
-        // Phase 15C: UV-safe backpack gradient
         backpack.GetComponent<Renderer>().material = CreateTexturedMaterial("tex_char_backpack_orange", new Color(0.9f, 0.4f, 0.1f));
         Destroy(backpack.GetComponent<Collider>());
+        if (charModel != null) backpack.GetComponent<Renderer>().enabled = false;
         // Phase 15E: Backpack detail texture quad (SDXL on flat surface)
         Texture2D bpTex = LoadTexture("tex_char_backpack_detail");
-        if (bpTex != null)
+        if (bpTex != null && charModel == null)
         {
             GameObject bpQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             bpQuad.name = "BackpackDetail";
@@ -651,7 +712,22 @@ public class RuntimeSceneBuilder : MonoBehaviour
         hoverboard.transform.SetParent(player.transform);
         hoverboard.transform.localPosition = new Vector3(0f, -0.3f, 0f);
 
-        // Phase 3: Enhanced hoverboard with better shape
+        // Phase 16: Try loading Blender FBX hoverboard model
+        GameObject boardModel = LoadModel("mesh_hoverboard");
+        if (boardModel != null)
+        {
+            boardModel.name = "BoardModel";
+            boardModel.transform.SetParent(hoverboard.transform);
+            boardModel.transform.localPosition = Vector3.zero;
+            boardModel.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+            foreach (Collider c in boardModel.GetComponentsInChildren<Collider>())
+                Destroy(c);
+            Debug.Log("[RSB] Phase 16: Loaded Blender hoverboard model");
+            hoverboard.SetActive(false);
+            return;
+        }
+
+        // Fallback: primitive hoverboard
         GameObject deck = GameObject.CreatePrimitive(PrimitiveType.Cube);
         deck.name = "Deck";
         deck.transform.SetParent(hoverboard.transform);
@@ -660,7 +736,6 @@ public class RuntimeSceneBuilder : MonoBehaviour
         deck.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.2f, 0.1f, 0.5f));
         Destroy(deck.GetComponent<Collider>());
 
-        // Phase 3: Front nose curve (capsule)
         GameObject nose = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         nose.name = "Nose";
         nose.transform.SetParent(hoverboard.transform);
@@ -669,7 +744,6 @@ public class RuntimeSceneBuilder : MonoBehaviour
         nose.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.2f, 0.1f, 0.5f));
         Destroy(nose.GetComponent<Collider>());
 
-        // Phase 3: Tail kick
         GameObject tail = GameObject.CreatePrimitive(PrimitiveType.Cube);
         tail.name = "Tail";
         tail.transform.SetParent(hoverboard.transform);
@@ -679,7 +753,6 @@ public class RuntimeSceneBuilder : MonoBehaviour
         tail.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.15f, 0.6f));
         Destroy(tail.GetComponent<Collider>());
 
-        // Glow underside (brighter, pulsing via script)
         GameObject glow = GameObject.CreatePrimitive(PrimitiveType.Cube);
         glow.name = "Glow";
         glow.transform.SetParent(hoverboard.transform);
@@ -689,7 +762,6 @@ public class RuntimeSceneBuilder : MonoBehaviour
         glow.GetComponent<Renderer>().material = glowMat;
         Destroy(glow.GetComponent<Collider>());
 
-        // Phase 3: Side rails
         for (int rs = -1; rs <= 1; rs += 2)
         {
             GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -701,7 +773,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
             Destroy(rail.GetComponent<Collider>());
         }
 
-        hoverboard.SetActive(false); // Hidden by default, shown when board selected
+        hoverboard.SetActive(false);
     }
 
     private void ApplyOutfit(int outfitIdx)
@@ -1594,10 +1666,32 @@ public class RuntimeSceneBuilder : MonoBehaviour
     {
         if (player == null) return;
 
-        float runCycle = Time.time * (currentSpeed * 0.8f);
+        // Phase 16: Enhanced animation with smoother curves and speed-based frequency
+        float speedNorm = Mathf.Clamp01((currentSpeed - 10f) / 25f);
+        float runFreq = Mathf.Lerp(6f, 14f, speedNorm);
+        float runCycle = Time.time * runFreq;
+
+        // Phase 16: Animate FBX model with subtle spine rotation for run feel
+        Transform charModel = player.transform.Find("CharacterModel");
+        if (charModel != null)
+        {
+            float spineRot = Mathf.Sin(runCycle) * 5f;
+            float spineForward = Mathf.Lerp(0f, 8f, speedNorm);
+            charModel.localRotation = Quaternion.Euler(spineForward, spineRot, 0f);
+            float modelBob = Mathf.Abs(Mathf.Sin(runCycle * 2f)) * 0.04f;
+            charModel.localPosition = new Vector3(0f, modelBob, 0f);
+        }
 
         if (isRolling)
         {
+            // Phase 16: Enhanced slide — squash effect
+            float squash = Mathf.Lerp(1f, 0.5f, Mathf.Clamp01(rollTimer / 0.15f));
+            if (charModel != null)
+            {
+                charModel.localScale = new Vector3(0.7f, 0.7f * squash, 0.7f);
+                charModel.localPosition = new Vector3(0f, -0.3f * (1f - squash), 0f);
+                charModel.localRotation = Quaternion.Euler(15f, 0f, 0f);
+            }
             if (playerBody != null)
                 playerBody.localPosition = new Vector3(0f, 0.1f, 0f);
             if (playerHead != null)
@@ -1613,8 +1707,13 @@ public class RuntimeSceneBuilder : MonoBehaviour
         }
         else
         {
-            float legSwing = Mathf.Sin(runCycle) * 25f;
-            float armSwing = Mathf.Sin(runCycle) * 20f;
+            // Phase 16: Reset squash on model
+            if (charModel != null)
+                charModel.localScale = new Vector3(0.7f, 0.7f, 0.7f);
+
+            // Phase 16: Smoother leg/arm swing with eased sine curves
+            float legSwing = Mathf.Sin(runCycle) * Mathf.Lerp(20f, 35f, speedNorm);
+            float armSwing = Mathf.Sin(runCycle) * Mathf.Lerp(15f, 28f, speedNorm);
             float bodyBob = Mathf.Abs(Mathf.Sin(runCycle * 2f)) * 0.06f;
 
             if (playerBody != null)
@@ -1647,17 +1746,24 @@ public class RuntimeSceneBuilder : MonoBehaviour
 
         if (isJumping)
         {
+            // Phase 16: Enhanced jump animation — parabolic arc with tuck and spread
             float jumpProgress = jumpTimer / jumpDuration;
-            float tuckAngle = Mathf.Sin(jumpProgress * Mathf.PI) * 30f;
+            float tuckAngle = Mathf.Sin(jumpProgress * Mathf.PI) * 35f;
+            float spreadAngle = Mathf.Sin(jumpProgress * Mathf.PI) * 12f;
+
+            if (charModel != null)
+            {
+                charModel.localRotation = Quaternion.Euler(-tuckAngle * 0.3f, 0f, 0f);
+            }
 
             if (playerLeftLeg != null)
                 playerLeftLeg.localRotation = Quaternion.Euler(-tuckAngle, 0f, 0f);
             if (playerRightLeg != null)
                 playerRightLeg.localRotation = Quaternion.Euler(-tuckAngle, 0f, 0f);
             if (playerLeftArm != null)
-                playerLeftArm.localRotation = Quaternion.Euler(tuckAngle * 0.5f, 0f, -15f);
+                playerLeftArm.localRotation = Quaternion.Euler(tuckAngle * 0.5f, 0f, -spreadAngle);
             if (playerRightArm != null)
-                playerRightArm.localRotation = Quaternion.Euler(tuckAngle * 0.5f, 0f, 15f);
+                playerRightArm.localRotation = Quaternion.Euler(tuckAngle * 0.5f, 0f, spreadAngle);
         }
     }
 
