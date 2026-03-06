@@ -56,8 +56,8 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material curbMat;
     private Material crosswalkHDMat;
 
-    // Phase 13: Curved world effect (reduced from 0.005 to 0.003 to minimize edge stretching artifacts)
-    private float curvedWorldIntensity = 0.003f;
+    // Phase 14: Curved world effect (reduced to 0.0015 to virtually eliminate edge stretching)
+    private float curvedWorldIntensity = 0.0015f;
 
     private Shader litShader;
     private int segmentsSpawned = 0;
@@ -398,8 +398,9 @@ public class SimpleTrackRunner : MonoBehaviour
             GameObject sw = GameObject.CreatePrimitive(PrimitiveType.Cube);
             sw.name = "Sidewalk";
             sw.transform.SetParent(segment.transform);
-            // Phase 13: Sidewalks use dark road-matching material to eliminate orange edge streaks
-            sw.transform.localPosition = new Vector3(side * 7.5f, -0.3f, segmentLength / 2f);
+            // Phase 13: Sidewalks positioned just outside widened road
+            // Road half-width is ~7.0; curb sits at ~7.15; sidewalk inner edge at ~7.3
+            sw.transform.localPosition = new Vector3(side * 9.3f, -0.3f, segmentLength / 2f);
             sw.transform.localScale = new Vector3(4f, 0.6f, segmentLength);
             // Use dark material matching road color so curved world stretching is invisible
             Material swEdgeMat = CreateTexturedMaterial("tex_sidewalk_wide", new Color(0.4f, 0.4f, 0.42f));
@@ -414,7 +415,7 @@ public class SimpleTrackRunner : MonoBehaviour
                 GameObject curb = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 curb.name = "Curb";
                 curb.transform.SetParent(segment.transform);
-                curb.transform.localPosition = new Vector3(side * 4.7f, -0.05f, segmentLength / 2f);
+                curb.transform.localPosition = new Vector3(side * 7.2f, -0.05f, segmentLength / 2f);
                 curb.transform.localScale = new Vector3(0.3f, 0.15f, segmentLength);
                 curb.GetComponent<Renderer>().material = curbMat;
                 Destroy(curb.GetComponent<Collider>());
@@ -755,7 +756,7 @@ public class SimpleTrackRunner : MonoBehaviour
             GameObject grass = GameObject.CreatePrimitive(PrimitiveType.Cube);
             grass.name = "Grass";
             grass.transform.SetParent(segment.transform);
-            grass.transform.localPosition = new Vector3(side * 15f, -0.6f, segmentLength / 2f);
+            grass.transform.localPosition = new Vector3(side * 18f, -1.0f, segmentLength / 2f);
             grass.transform.localScale = new Vector3(18f, 0.5f, segmentLength);
             grass.GetComponent<Renderer>().material = grassMat;
             Destroy(grass.GetComponent<Collider>());
@@ -767,9 +768,9 @@ public class SimpleTrackRunner : MonoBehaviour
             GameObject curb = GameObject.CreatePrimitive(PrimitiveType.Cube);
             curb.name = "Curb";
             curb.transform.SetParent(segment.transform);
-            curb.transform.localPosition = new Vector3(side * 4.7f, -0.15f, segmentLength / 2f);
+            curb.transform.localPosition = new Vector3(side * 7.2f, -0.15f, segmentLength / 2f);
             curb.transform.localScale = new Vector3(0.15f, 0.3f, segmentLength);
-            curb.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.55f, 0.55f, 0.5f));
+            curb.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.3f, 0.32f));
             Destroy(curb.GetComponent<Collider>());
         }
 
