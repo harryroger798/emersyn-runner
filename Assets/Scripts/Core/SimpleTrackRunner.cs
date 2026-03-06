@@ -75,6 +75,15 @@ public class SimpleTrackRunner : MonoBehaviour
     private Material laneDividerMat;
     private Material coinShineMat;
 
+    // Phase 15G: Visual polish materials
+    private Material crosswalkNewMat;
+    private Material fenceRailingMat;
+    private Material coinEmbossedMat;
+    private Material rooftopDetailMat;
+    private Material manholeDetailedMat;
+    private Material grassDetailedMat;
+    private Material buildingApartmentMat;
+
     // Phase 14G: Curved world DISABLED — was causing orange streak artifacts
     // The per-frame vertex manipulation stretched textures at perspective angles
     private float curvedWorldIntensity = 0f;
@@ -165,13 +174,15 @@ public class SimpleTrackRunner : MonoBehaviour
     {
         litShader = FindWorkingShader();
 
-        // Phase 15F: Use smooth dark road (less wavy artifacts), fallback chain
-        roadMat = CreateTexturedMaterialTiled("tex_road_smooth_dark", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        // Phase 15G: Use asphalt grain road (visible texture detail), fallback chain
+        roadMat = CreateTexturedMaterialTiled("tex_road_asphalt_grain", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_smooth_dark", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_subway_style", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_clean_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_plain_grey", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
-        // Phase 15F: Use paver sidewalk texture (brick pattern), fallback chain
-        sidewalkMat = CreateTexturedMaterial("tex_sidewalk_paver", new Color(0.6f, 0.6f, 0.55f));
+        // Phase 15G: Use clear brick sidewalk texture, fallback chain
+        sidewalkMat = CreateTexturedMaterial("tex_sidewalk_brick_clear", new Color(0.6f, 0.6f, 0.55f));
+        if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_paver", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_subway_style", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_clean_grey", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_hd", new Color(0.6f, 0.6f, 0.55f));
@@ -248,8 +259,9 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_train_subway_red_clean", new Color(0.7f, 0.25f, 0.2f))
         };
 
-        // Phase 15F: Use smooth dark HD road texture, fallback chain
-        roadHDMat = CreateTexturedMaterialTiled("tex_road_smooth_dark", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
+        // Phase 15G: Use asphalt grain HD road texture, fallback chain
+        roadHDMat = CreateTexturedMaterialTiled("tex_road_asphalt_grain", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
+        if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_smooth_dark", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
         if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_subway_style", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
         if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_clean_asphalt", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
         if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
@@ -302,7 +314,9 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_building_skate_shop", new Color(0.5f, 0.7f, 0.4f)),
             // Phase 15E: 2 new emergency service buildings (Modal SDXL)
             CreateTexturedMaterial("tex_building_police_station", new Color(0.4f, 0.5f, 0.7f)),
-            CreateTexturedMaterial("tex_building_fire_station", new Color(0.8f, 0.3f, 0.2f))
+            CreateTexturedMaterial("tex_building_fire_station", new Color(0.8f, 0.3f, 0.2f)),
+            // Phase 15G: Clean procedural apartment facade (no UV artifacts)
+            CreateTexturedMaterial("tex_building_apartment_clean", new Color(0.7f, 0.68f, 0.65f))
         };
 
         // Phase 15D: Use new Modal SDXL billboard textures (flat surfaces), fallback to Phase 3
@@ -310,7 +324,9 @@ public class SimpleTrackRunner : MonoBehaviour
         if (billboardMat1.mainTexture == null) billboardMat1 = CreateTexturedMaterial("tex_env_billboard_1", new Color(0.6f, 0.5f, 0.9f));
         billboardMat2 = CreateTexturedMaterial("tex_billboard_energy_drink", new Color(0.9f, 0.5f, 0.3f));
         if (billboardMat2.mainTexture == null) billboardMat2 = CreateTexturedMaterial("tex_env_billboard_2", new Color(0.9f, 0.5f, 0.3f));
-        rooftopMat = CreateColorMaterial(new Color(0.45f, 0.45f, 0.48f));
+        // Phase 15G: Use rooftop detail texture, fallback to solid color
+        rooftopMat = CreateTexturedMaterial("tex_rooftop_detail", new Color(0.45f, 0.45f, 0.48f));
+        if (rooftopMat.mainTexture == null) rooftopMat = CreateColorMaterial(new Color(0.45f, 0.45f, 0.48f));
         // Phase 15E: Use detailed subway tunnel wall texture (Modal SDXL), fallback to Phase 15C gradient
         tunnelMat = CreateTexturedMaterial("tex_tunnel_wall_subway", new Color(0.25f, 0.25f, 0.28f));
         if (tunnelMat.mainTexture == null) tunnelMat = CreateTexturedMaterial("tex_tunnel_interior_clean", new Color(0.25f, 0.25f, 0.28f));
@@ -340,6 +356,20 @@ public class SimpleTrackRunner : MonoBehaviour
             if (coinShineMat.HasProperty("_Metallic")) coinShineMat.SetFloat("_Metallic", 0.9f);
             if (coinShineMat.HasProperty("_Smoothness")) coinShineMat.SetFloat("_Smoothness", 0.95f);
         }
+
+        // Phase 15G: Visual polish materials
+        crosswalkNewMat = CreateTexturedMaterial("tex_road_crosswalk", new Color(0.9f, 0.9f, 0.9f));
+        fenceRailingMat = CreateTexturedMaterial("tex_fence_railing", new Color(0.55f, 0.55f, 0.58f));
+        coinEmbossedMat = CreateTexturedMaterial("tex_coin_embossed_gold", new Color(1f, 0.85f, 0.1f));
+        if (coinEmbossedMat.mainTexture != null)
+        {
+            if (coinEmbossedMat.HasProperty("_Metallic")) coinEmbossedMat.SetFloat("_Metallic", 0.95f);
+            if (coinEmbossedMat.HasProperty("_Smoothness")) coinEmbossedMat.SetFloat("_Smoothness", 0.98f);
+        }
+        rooftopDetailMat = CreateTexturedMaterial("tex_rooftop_detail", new Color(0.45f, 0.45f, 0.48f));
+        manholeDetailedMat = CreateTexturedMaterial("tex_manhole_detailed", new Color(0.35f, 0.35f, 0.35f));
+        grassDetailedMat = CreateTexturedMaterialTiled("tex_grass_detailed", new Color(0.3f, 0.55f, 0.2f), 2f, 4f);
+        buildingApartmentMat = CreateTexturedMaterial("tex_building_apartment_clean", new Color(0.7f, 0.68f, 0.65f));
     }
 
     public void StartTrack()
@@ -1259,8 +1289,8 @@ public class SimpleTrackRunner : MonoBehaviour
             float z = startZ + i * coinSpacing;
             if (z >= segStartZ + segmentLength - 5f) break;
 
-            // Phase 15F: Use golden shine coin material if available
-            Material activeCoinMat = (coinShineMat != null && coinShineMat.mainTexture != null) ? coinShineMat : coinMat;
+            // Phase 15G: Use embossed gold coin, fallback to shine, fallback to default
+            Material activeCoinMat = (coinEmbossedMat != null && coinEmbossedMat.mainTexture != null) ? coinEmbossedMat : (coinShineMat != null && coinShineMat.mainTexture != null) ? coinShineMat : coinMat;
             GameObject coin = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             coin.name = "Coin";
             coin.transform.position = new Vector3(lane * laneWidth, 1.2f, z);
@@ -1276,7 +1306,7 @@ public class SimpleTrackRunner : MonoBehaviour
             while (lane2 == lane) lane2 = Random.Range(-1, 2);
             float startZ2 = segStartZ + segmentLength * 0.5f;
             int count2 = Random.Range(2, 6);
-            Material activeCoinMat2 = (coinShineMat != null && coinShineMat.mainTexture != null) ? coinShineMat : coinMat;
+            Material activeCoinMat2 = (coinEmbossedMat != null && coinEmbossedMat.mainTexture != null) ? coinEmbossedMat : (coinShineMat != null && coinShineMat.mainTexture != null) ? coinShineMat : coinMat;
             for (int i = 0; i < count2; i++)
             {
                 float z = startZ2 + i * coinSpacing;
@@ -1298,7 +1328,7 @@ public class SimpleTrackRunner : MonoBehaviour
             int elevLane = Random.Range(-1, 2);
             float elevZ = segStartZ + Random.Range(10f, segmentLength - 10f);
             int elevCount = Random.Range(3, 6);
-            Material activeCoinMat3 = (coinShineMat != null && coinShineMat.mainTexture != null) ? coinShineMat : coinMat;
+            Material activeCoinMat3 = (coinEmbossedMat != null && coinEmbossedMat.mainTexture != null) ? coinEmbossedMat : (coinShineMat != null && coinShineMat.mainTexture != null) ? coinShineMat : coinMat;
             for (int i = 0; i < elevCount; i++)
             {
                 GameObject coin = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
