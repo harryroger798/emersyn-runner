@@ -796,7 +796,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
         speedMain.startSize = 0.05f;
         speedMain.startColor = new Color(1f, 1f, 1f, 0.4f);
         speedMain.maxParticles = 50;
-        speedMain.simulationSpace = ParticleSystemSimulationSpace.World;
+        // Phase 14F: Local simulation to avoid long world-space streak artifacts in screenshots
+        speedMain.simulationSpace = ParticleSystemSimulationSpace.Local;
         var speedEmission = speedLinesPS.emission;
         speedEmission.rateOverTime = 0f;
         var speedShape = speedLinesPS.shape;
@@ -814,17 +815,19 @@ public class RuntimeSceneBuilder : MonoBehaviour
         dustMain.startSpeed = 2.5f;
         dustMain.startLifetime = 0.4f;
         dustMain.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.2f);
-        dustMain.startColor = new Color(0.65f, 0.6f, 0.5f, 0.35f);
+        // Phase 14F: Neutral dust color (no orange tint)
+        dustMain.startColor = new Color(0.55f, 0.55f, 0.55f, 0.22f);
         dustMain.maxParticles = 25;
         dustMain.gravityModifier = -0.2f;
-        dustMain.simulationSpace = ParticleSystemSimulationSpace.World;
+        // Phase 14F: Local simulation to avoid long world-space streak artifacts
+        dustMain.simulationSpace = ParticleSystemSimulationSpace.Local;
         var dustEmission = dustPS.emission;
         dustEmission.rateOverTime = 0f;
         var dustShape = dustPS.shape;
         dustShape.shapeType = ParticleSystemShapeType.Hemisphere;
         dustShape.radius = 0.3f;
         ParticleSystemRenderer dustRend = dustObj.GetComponent<ParticleSystemRenderer>();
-        dustRend.material = CreateColorMaterial(new Color(0.7f, 0.65f, 0.5f, 0.5f));
+        dustRend.material = CreateColorMaterial(new Color(0.6f, 0.6f, 0.6f, 0.35f));
 
         // Phase 3: Enhanced coin collect burst with VFX texture
         GameObject coinPObj = new GameObject("CoinParticles");
