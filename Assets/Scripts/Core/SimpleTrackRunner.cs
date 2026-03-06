@@ -146,18 +146,19 @@ public class SimpleTrackRunner : MonoBehaviour
     {
         litShader = FindWorkingShader();
 
-        // Phase 8: Use HD road asphalt and stone sidewalk textures from Modal
-        roadMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
-        if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
-        // Phase 10: Use HD sidewalk texture from Modal, fallback chain
-        sidewalkMat = CreateTexturedMaterial("tex_sidewalk_hd", new Color(0.6f, 0.6f, 0.55f));
+        // Phase 14: Use clean asphalt (no colored markings) to eliminate orange streaks
+        roadMat = CreateTexturedMaterialTiled("tex_road_clean_asphalt", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_plain_grey", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        if (roadMat.mainTexture == null) roadMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
+        // Phase 14: Use clean grey sidewalk texture, fallback chain
+        sidewalkMat = CreateTexturedMaterial("tex_sidewalk_clean_grey", new Color(0.6f, 0.6f, 0.55f));
+        if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_hd", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.6f, 0.6f, 0.55f));
         if (sidewalkMat.mainTexture == null) sidewalkMat = CreateTexturedMaterial("tex_road_sidewalk", new Color(0.6f, 0.6f, 0.55f));
-        // Phase 13: Use dark fill texture for grass strips to eliminate orange streaks
-        // The strips between road and sidewalk were showing as orange due to curved world stretching
-        grassMat = CreateTexturedMaterialTiled("tex_ground_dark_fill", new Color(0.25f, 0.25f, 0.28f), 4f, 4f);
-        if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_road_dark_asphalt", new Color(0.25f, 0.25f, 0.28f), 4f, 4f);
-        if (grassMat.mainTexture == null) grassMat = CreateColorMaterial(new Color(0.25f, 0.25f, 0.28f));
+        // Phase 14: Use dark green grass texture, fallback to clean asphalt color
+        grassMat = CreateTexturedMaterialTiled("tex_grass_dark_green", new Color(0.15f, 0.3f, 0.15f), 4f, 4f);
+        if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_ground_dark_fill", new Color(0.25f, 0.25f, 0.28f), 4f, 4f);
+        if (grassMat.mainTexture == null) grassMat = CreateColorMaterial(new Color(0.2f, 0.3f, 0.2f));
         // Phase 8: Use HD barrier texture from Modal
         barrierMat = CreateTexturedMaterial("tex_obstacle_barrier_hd", new Color(0.9f, 0.2f, 0.15f));
         if (barrierMat.mainTexture == null) barrierMat = CreateTexturedMaterial("tex_barrier_red", new Color(0.9f, 0.2f, 0.15f));
@@ -243,13 +244,14 @@ public class SimpleTrackRunner : MonoBehaviour
             CreateTexturedMaterial("tex_train_subway_red", new Color(0.7f, 0.25f, 0.2f))
         };
 
-        // Phase 12: Use dark asphalt from Modal, fallback chain to Phase 8 HD
-        roadHDMat = CreateTexturedMaterialTiled("tex_road_dark_asphalt", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
+        // Phase 14: Use clean asphalt for HD road (no orange markings)
+        roadHDMat = CreateTexturedMaterialTiled("tex_road_clean_asphalt", new Color(0.2f, 0.2f, 0.25f), 2f, 8f);
+        if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_plain_grey", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
         if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_asphalt_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
-        if (roadHDMat.mainTexture == null) roadHDMat = CreateTexturedMaterialTiled("tex_road_hd", new Color(0.25f, 0.25f, 0.3f), 2f, 8f);
 
-        // Phase 8: Road curb material
-        curbMat = CreateTexturedMaterial("tex_road_curb", new Color(0.55f, 0.55f, 0.5f));
+        // Phase 14: Use dark grey curb texture
+        curbMat = CreateTexturedMaterial("tex_curb_dark_grey", new Color(0.3f, 0.3f, 0.32f));
+        if (curbMat.mainTexture == null) curbMat = CreateTexturedMaterial("tex_road_curb", new Color(0.3f, 0.3f, 0.32f));
         crosswalkHDMat = CreateTexturedMaterial("tex_road_crosswalk_hd", new Color(0.9f, 0.9f, 0.9f));
 
         // Phase 3+6+9: Hi-res building textures (1024px) — expanded with Phase 9 buildings
