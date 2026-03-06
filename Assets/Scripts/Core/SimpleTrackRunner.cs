@@ -441,86 +441,16 @@ public class SimpleTrackRunner : MonoBehaviour
             }
         }
 
-        // Crosswalk patches
-        if (Random.value < 0.3f)
-        {
-            GameObject crosswalk = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            crosswalk.name = "Crosswalk";
-            crosswalk.transform.SetParent(segment.transform);
-            float cwZ = Random.Range(5f, segmentLength - 5f);
-            crosswalk.transform.localPosition = new Vector3(0f, 0.08f, cwZ);
-            crosswalk.transform.localScale = new Vector3(8f, 0.04f, 3f);
-            crosswalk.GetComponent<Renderer>().material = crosswalkMat;
-            Destroy(crosswalk.GetComponent<Collider>());
-        }
+        // Phase 14D: Crosswalks removed — their colored textures caused orange streak artifacts
+        // when rendered at steep perspective angles near the camera
 
-        // Manhole covers
-        if (Random.value < 0.2f)
-        {
-            GameObject manhole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            manhole.name = "Manhole";
-            manhole.transform.SetParent(segment.transform);
-            float mhZ = Random.Range(5f, segmentLength - 5f);
-            int mhLane = Random.Range(-1, 2);
-            manhole.transform.localPosition = new Vector3(mhLane * laneWidth, 0.08f, mhZ);
-            manhole.transform.localScale = new Vector3(1f, 0.04f, 1f);
-            manhole.GetComponent<Renderer>().material = manholeMat;
-            Destroy(manhole.GetComponent<Collider>());
-        }
+        // Phase 14D: Manholes removed — caused colored streaks at perspective angles
 
-        // Phase 9: Ground detail - puddles (rain effect)
-        if (Random.value < 0.15f)
-        {
-            Material puddleMat = CreateTexturedMaterial("tex_ground_puddle", new Color(0.3f, 0.4f, 0.6f));
-            if (puddleMat.mainTexture != null)
-            {
-                GameObject puddle = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                puddle.name = "Puddle";
-                puddle.transform.SetParent(segment.transform);
-                float pdZ = Random.Range(5f, segmentLength - 5f);
-                int pdLane = Random.Range(-1, 2);
-                puddle.transform.localPosition = new Vector3(pdLane * laneWidth, 0.07f, pdZ);
-                puddle.transform.localScale = new Vector3(1.5f, 0.02f, 1f);
-                puddle.GetComponent<Renderer>().material = puddleMat;
-                Destroy(puddle.GetComponent<Collider>());
-            }
-        }
+        // Phase 14D: Puddles removed — caused colored streaks at perspective angles
 
-        // Phase 9: Ground detail - drainage grates
-        if (Random.value < 0.12f)
-        {
-            Material grateMat = CreateTexturedMaterial("tex_ground_grate", new Color(0.35f, 0.35f, 0.35f));
-            if (grateMat.mainTexture != null)
-            {
-                GameObject grate = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                grate.name = "Grate";
-                grate.transform.SetParent(segment.transform);
-                float grZ = Random.Range(5f, segmentLength - 5f);
-                int grSide = Random.value < 0.5f ? -1 : 1;
-                grate.transform.localPosition = new Vector3(grSide * 4.2f, 0.07f, grZ);
-                grate.transform.localScale = new Vector3(0.8f, 0.02f, 0.5f);
-                grate.GetComponent<Renderer>().material = grateMat;
-                Destroy(grate.GetComponent<Collider>());
-            }
-        }
+        // Phase 14D: Grates removed — caused colored streaks at perspective angles
 
-        // Phase 9: Road arrow markings
-        if (Random.value < 0.1f)
-        {
-            Material arrowMat = CreateTexturedMaterial("tex_road_marking_arrow", new Color(0.9f, 0.9f, 0.9f));
-            if (arrowMat.mainTexture != null)
-            {
-                GameObject arrow = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                arrow.name = "RoadArrow";
-                arrow.transform.SetParent(segment.transform);
-                float arZ = Random.Range(10f, segmentLength - 10f);
-                int arLane = Random.Range(-1, 2);
-                arrow.transform.localPosition = new Vector3(arLane * laneWidth, 0.08f, arZ);
-                arrow.transform.localScale = new Vector3(1.2f, 0.02f, 2f);
-                arrow.GetComponent<Renderer>().material = arrowMat;
-                Destroy(arrow.GetComponent<Collider>());
-            }
-        }
+        // Phase 14D: Road arrows removed — caused colored streaks at perspective angles
 
         // Buildings with textures — Phase 3: mix hi-res (1024px) + original variants
         Material[] allBuildingMats;
