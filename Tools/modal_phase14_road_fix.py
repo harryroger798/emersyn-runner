@@ -140,6 +140,19 @@ def generate_road_textures():
             "size": 1024,
             "negative_extra": "clouds, sun, stars, orange, sunset"
         },
+        # Phase 15A: VFX particle sprites (saved with alpha from brightness)
+        {
+            "name": "tex_vfx_speed_line",
+            "prompt": "single VFX sprite, long thin speed line streak, white and light cyan, strong motion blur, high contrast, centered, on pure black background, no border, mobile game particle sprite",
+            "size": 512,
+            "negative_extra": "text, watermark, border, frame, background scene, colorful background"
+        },
+        {
+            "name": "tex_vfx_dust_puff",
+            "prompt": "single VFX sprite, soft dust puff cloud, light grey smoke, round, high contrast, centered, on pure black background, no border, mobile game particle sprite",
+            "size": 512,
+            "negative_extra": "text, watermark, border, frame, background scene, colorful background"
+        },
     ]
 
     results = {}
@@ -165,6 +178,18 @@ def generate_road_textures():
             guidance_scale=8.5,
             generator=generator,
         ).images[0]
+
+        # Phase 15A: For VFX textures, convert black background to alpha (brightness -> alpha)
+        if name.startswith("tex_vfx_"):
+            rgba = image.convert("RGBA")
+            px = rgba.load()
+            for y in range(rgba.size[1]):
+                for x in range(rgba.size[0]):
+                    r, g, b, _ = px[x, y]
+                    lum = int((r + g + b) / 3)
+                    # Keep RGB white; use luminance as alpha
+                    px[x, y] = (255, 255, 255, lum)
+            image = rgba
 
         output_path = os.path.join(ASSET_MOUNT, f"textures/{name}.png")
         os.makedirs(os.path.dirname(output_path), exist_ok=True)

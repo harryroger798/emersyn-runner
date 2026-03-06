@@ -202,6 +202,49 @@ public class RuntimeSceneBuilder : MonoBehaviour
         return mat;
     }
 
+    // Phase 15A: Create a particle material with proper alpha/additive blending
+    private Material CreateParticleMaterial(Color color, Texture2D tex = null)
+    {
+        // Try particle shaders in priority order
+        string[] particleShaders = new string[]
+        {
+            "Universal Render Pipeline/Particles/Unlit",
+            "Universal Render Pipeline/Particles/Simple Lit",
+            "Particles/Standard Unlit",
+            "Particles/Alpha Blended",
+            "Mobile/Particles/Alpha Blended",
+            "Sprites/Default"
+        };
+        Shader pShader = null;
+        foreach (string sn in particleShaders)
+        {
+            pShader = Shader.Find(sn);
+            if (pShader != null) { Debug.Log("[RSB] Particle shader: " + sn); break; }
+        }
+        if (pShader == null) pShader = FindWorkingShader();
+
+        Material mat = new Material(pShader);
+        mat.color = color;
+        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+        if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);
+        // Enable alpha blending
+        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        mat.SetInt("_ZWrite", 0);
+        mat.renderQueue = 3000; // Transparent queue
+        if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 1f); // URP transparent
+        if (mat.HasProperty("_Blend")) mat.SetFloat("_Blend", 0f); // Alpha blend mode
+        mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        mat.EnableKeyword("_ALPHABLEND_ON");
+        if (tex != null)
+        {
+            mat.mainTexture = tex;
+            if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", tex);
+            if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", tex);
+        }
+        return mat;
+    }
+
     private Material CreateTexturedMaterial(string textureName, Color fallbackColor)
     {
         Texture2D tex = LoadTexture(textureName);
@@ -738,6 +781,11 @@ public class RuntimeSceneBuilder : MonoBehaviour
 
     private void CreateParticleSystems()
     {
+        // Phase 15A: Load locally-generated particle textures with proper alpha
+        Texture2D speedLineTex = LoadTexture("tex_particle_speed_line");
+        Texture2D dustTex = LoadTexture("tex_particle_dust");
+        Texture2D circleTex = LoadTexture("tex_particle_circle");
+
         GameObject speedObj = new GameObject("SpeedLines");
         speedObj.transform.SetParent(player.transform);
         speedObj.transform.localPosition = new Vector3(0f, 1f, -2f);
@@ -745,10 +793,9 @@ public class RuntimeSceneBuilder : MonoBehaviour
         var speedMain = speedLinesPS.main;
         speedMain.startSpeed = 20f;
         speedMain.startLifetime = 0.3f;
-        speedMain.startSize = 0.05f;
-        speedMain.startColor = new Color(1f, 1f, 1f, 0.4f);
+        speedMain.startSize = 0.15f;
+        speedMain.startColor = new Color(1f, 1f, 1f, 0.5f);
         speedMain.maxParticles = 50;
-        // Phase 14F: Local simulation to avoid long world-space streak artifacts in screenshots
         speedMain.simulationSpace = ParticleSystemSimulationSpace.Local;
         var speedEmission = speedLinesPS.emission;
         speedEmission.rateOverTime = 0f;
@@ -756,10 +803,12 @@ public class RuntimeSceneBuilder : MonoBehaviour
         speedShape.shapeType = ParticleSystemShapeType.Box;
         speedShape.scale = new Vector3(3f, 3f, 0.1f);
         ParticleSystemRenderer speedRend = speedObj.GetComponent<ParticleSystemRenderer>();
-        speedRend.material = CreateColorMaterial(Color.white);
-        // Phase 14K: Re-enabled — root cause was static ground plane, not particles
+        // Phase 15A: Use particle material with alpha blending + custom texture
+        speedRend.material = CreateParticleMaterial(new Color(1f, 1f, 1f, 0.5f), speedLineTex);
+        speedRend.renderMode = ParticleSystemRenderMode.Stretch;
+        speedRend.lengthScale = 4f;
 
-        // Phase 4: Improved dust particles — smaller, softer, more realistic
+        // Dust particles — smaller, softer, more realistic
         GameObject dustObj = new GameObject("DustParticles");
         dustObj.transform.SetParent(player.transform);
         dustObj.transform.localPosition = new Vector3(0f, 0.05f, -0.5f);
@@ -767,12 +816,10 @@ public class RuntimeSceneBuilder : MonoBehaviour
         var dustMain = dustPS.main;
         dustMain.startSpeed = 2.5f;
         dustMain.startLifetime = 0.4f;
-        dustMain.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.2f);
-        // Phase 14F: Neutral dust color (no orange tint)
-        dustMain.startColor = new Color(0.55f, 0.55f, 0.55f, 0.22f);
+        dustMain.startSize = new ParticleSystem.MinMaxCurve(0.15f, 0.35f);
+        dustMain.startColor = new Color(0.7f, 0.7f, 0.65f, 0.3f);
         dustMain.maxParticles = 25;
         dustMain.gravityModifier = -0.2f;
-        // Phase 14F: Local simulation to avoid long world-space streak artifacts
         dustMain.simulationSpace = ParticleSystemSimulationSpace.Local;
         var dustEmission = dustPS.emission;
         dustEmission.rateOverTime = 0f;
@@ -780,10 +827,10 @@ public class RuntimeSceneBuilder : MonoBehaviour
         dustShape.shapeType = ParticleSystemShapeType.Hemisphere;
         dustShape.radius = 0.3f;
         ParticleSystemRenderer dustRend = dustObj.GetComponent<ParticleSystemRenderer>();
-        dustRend.material = CreateColorMaterial(new Color(0.6f, 0.6f, 0.6f, 0.35f));
-        // Phase 14K: Re-enabled — root cause was static ground plane, not particles
+        // Phase 15A: Use particle material with alpha blending + dust texture
+        dustRend.material = CreateParticleMaterial(new Color(0.7f, 0.7f, 0.65f, 0.3f), dustTex);
 
-        // Phase 3: Enhanced coin collect burst with VFX texture
+        // Coin collect burst
         GameObject coinPObj = new GameObject("CoinParticles");
         coinPObj.transform.SetParent(player.transform);
         coinPObj.transform.localPosition = new Vector3(0f, 1f, 0f);
@@ -791,8 +838,8 @@ public class RuntimeSceneBuilder : MonoBehaviour
         var coinMain = coinCollectPS.main;
         coinMain.startSpeed = 6f;
         coinMain.startLifetime = 0.5f;
-        coinMain.startSize = 0.2f;
-        coinMain.startColor = new Color(1f, 0.85f, 0.1f, 0.95f);
+        coinMain.startSize = 0.25f;
+        coinMain.startColor = new Color(1f, 0.85f, 0.1f, 0.9f);
         coinMain.maxParticles = 20;
         coinMain.gravityModifier = 0.8f;
         var coinEmission = coinCollectPS.emission;
@@ -801,21 +848,10 @@ public class RuntimeSceneBuilder : MonoBehaviour
         coinShape.shapeType = ParticleSystemShapeType.Sphere;
         coinShape.radius = 0.4f;
         ParticleSystemRenderer coinRend = coinPObj.GetComponent<ParticleSystemRenderer>();
-        // Try Phase 3 VFX texture for coin collect burst
-        Texture2D coinVfxTex = LoadTexture("tex_vfx_coin_collect");
-        if (coinVfxTex != null)
-        {
-            Material coinVfxMat = new Material(FindWorkingShader());
-            coinVfxMat.mainTexture = coinVfxTex;
-            if (coinVfxMat.HasProperty("_BaseMap")) coinVfxMat.SetTexture("_BaseMap", coinVfxTex);
-            coinRend.material = coinVfxMat;
-        }
-        else
-        {
-            coinRend.material = CreateColorMaterial(new Color(1f, 0.85f, 0.1f));
-        }
+        // Phase 15A: Use particle material with circle texture
+        coinRend.material = CreateParticleMaterial(new Color(1f, 0.85f, 0.1f, 0.9f), circleTex);
 
-        // Phase 3: Jump ring effect
+        // Jump ring effect
         GameObject jumpRingObj = new GameObject("JumpRingParticles");
         jumpRingObj.transform.SetParent(player.transform);
         jumpRingObj.transform.localPosition = new Vector3(0f, 0f, 0f);
@@ -830,18 +866,7 @@ public class RuntimeSceneBuilder : MonoBehaviour
         var jrEmission = jumpRingPS.emission;
         jrEmission.rateOverTime = 0f;
         ParticleSystemRenderer jrRend = jumpRingObj.GetComponent<ParticleSystemRenderer>();
-        Texture2D jumpRingTex = LoadTexture("tex_vfx_jump_ring");
-        if (jumpRingTex != null)
-        {
-            Material jrMat = new Material(FindWorkingShader());
-            jrMat.mainTexture = jumpRingTex;
-            if (jrMat.HasProperty("_BaseMap")) jrMat.SetTexture("_BaseMap", jumpRingTex);
-            jrRend.material = jrMat;
-        }
-        else
-        {
-            jrRend.material = CreateColorMaterial(new Color(0.3f, 0.7f, 1f, 0.6f));
-        }
+        jrRend.material = CreateParticleMaterial(new Color(0.3f, 0.7f, 1f, 0.6f), circleTex);
     }
 
     private void PositionCamera()
