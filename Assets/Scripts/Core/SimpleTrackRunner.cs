@@ -271,51 +271,26 @@ public class SimpleTrackRunner : MonoBehaviour
         if (curbMat.mainTexture == null) curbMat = CreateTexturedMaterial("tex_road_curb", new Color(0.3f, 0.3f, 0.32f));
         crosswalkHDMat = CreateTexturedMaterial("tex_road_crosswalk_hd", new Color(0.9f, 0.9f, 0.9f));
 
-        // Phase 3+6+9: Hi-res building textures (1024px) — expanded with Phase 9 buildings
+        // Phase 15H: Clean PIL building textures (UV-safe for cube primitives, no SDXL distortion)
+        // Each building texture uses procedural gradient + window grid pattern
         hiResBuildingMats = new Material[]
         {
-            CreateTexturedMaterial("tex_building_highrise_1", new Color(0.5f, 0.7f, 0.9f)),
-            CreateTexturedMaterial("tex_building_highrise_2", new Color(0.8f, 0.7f, 0.6f)),
-            CreateTexturedMaterial("tex_building_industrial", new Color(0.4f, 0.4f, 0.4f)),
-            CreateTexturedMaterial("tex_building_restaurant", new Color(0.9f, 0.4f, 0.2f)),
-            CreateTexturedMaterial("tex_building_arcade", new Color(0.9f, 0.8f, 0.2f)),
-            CreateTexturedMaterial("tex_building_hospital", new Color(0.9f, 0.9f, 0.95f)),
-            CreateTexturedMaterial("tex_building_school", new Color(0.7f, 0.5f, 0.3f)),
-            CreateTexturedMaterial("tex_building_cinema", new Color(0.6f, 0.2f, 0.3f)),
-            // Phase 9: 5 new building types from Modal
-            CreateTexturedMaterial("tex_building_apartment", new Color(0.6f, 0.45f, 0.35f)),
-            CreateTexturedMaterial("tex_building_office_tower", new Color(0.4f, 0.55f, 0.75f)),
-            CreateTexturedMaterial("tex_building_warehouse", new Color(0.45f, 0.45f, 0.45f)),
-            CreateTexturedMaterial("tex_building_diner", new Color(0.8f, 0.3f, 0.25f)),
-            CreateTexturedMaterial("tex_building_bookstore", new Color(0.55f, 0.4f, 0.3f)),
-            // Phase 10: 4 new building types from Modal
-            CreateTexturedMaterial("tex_building_skyscraper", new Color(0.4f, 0.6f, 0.8f)),
-            CreateTexturedMaterial("tex_building_brick_shop", new Color(0.6f, 0.4f, 0.3f)),
-            CreateTexturedMaterial("tex_building_hotel", new Color(0.7f, 0.6f, 0.5f)),
-            CreateTexturedMaterial("tex_building_gym", new Color(0.5f, 0.5f, 0.6f)),
-            // Phase 11: 4 new building types from Modal
-            CreateTexturedMaterial("tex_building_pizzeria", new Color(0.8f, 0.4f, 0.3f)),
-            CreateTexturedMaterial("tex_building_bank", new Color(0.7f, 0.7f, 0.75f)),
-            CreateTexturedMaterial("tex_building_laundromat", new Color(0.5f, 0.6f, 0.7f)),
-            CreateTexturedMaterial("tex_building_music_shop", new Color(0.6f, 0.3f, 0.6f)),
-            // Phase 12: 3 new building types from Modal
-            CreateTexturedMaterial("tex_building_toy_store", new Color(0.8f, 0.6f, 0.9f)),
-            CreateTexturedMaterial("tex_building_coffee_shop", new Color(0.6f, 0.45f, 0.3f)),
-            CreateTexturedMaterial("tex_building_pet_shop", new Color(0.5f, 0.7f, 0.5f)),
-            // Phase 13: 3 new building types from Modal
-            CreateTexturedMaterial("tex_building_subway_station", new Color(0.5f, 0.5f, 0.55f)),
-            CreateTexturedMaterial("tex_building_convenience_store", new Color(0.7f, 0.6f, 0.4f)),
-            CreateTexturedMaterial("tex_building_electronics_shop", new Color(0.35f, 0.4f, 0.6f)),
-            // Phase 15D: 5 new Subway Surfers-style building facades (Modal SDXL, flat surfaces)
-            CreateTexturedMaterial("tex_building_neon_arcade", new Color(0.8f, 0.3f, 0.7f)),
-            CreateTexturedMaterial("tex_building_sushi_bar", new Color(0.8f, 0.4f, 0.3f)),
-            CreateTexturedMaterial("tex_building_comic_store", new Color(0.4f, 0.6f, 0.9f)),
-            CreateTexturedMaterial("tex_building_ice_cream", new Color(0.9f, 0.7f, 0.8f)),
-            CreateTexturedMaterial("tex_building_skate_shop", new Color(0.5f, 0.7f, 0.4f)),
-            // Phase 15E: 2 new emergency service buildings (Modal SDXL)
-            CreateTexturedMaterial("tex_building_police_station", new Color(0.4f, 0.5f, 0.7f)),
-            CreateTexturedMaterial("tex_building_fire_station", new Color(0.8f, 0.3f, 0.2f)),
-            // Phase 15G: Clean procedural apartment facade (no UV artifacts)
+            CreateTexturedMaterial("tex_building_highrise_clean_1", new Color(0.5f, 0.7f, 0.9f)),
+            CreateTexturedMaterial("tex_building_highrise_clean_2", new Color(0.8f, 0.7f, 0.6f)),
+            CreateTexturedMaterial("tex_building_industrial_clean", new Color(0.4f, 0.4f, 0.4f)),
+            CreateTexturedMaterial("tex_building_restaurant_clean", new Color(0.9f, 0.4f, 0.2f)),
+            CreateTexturedMaterial("tex_building_arcade_clean", new Color(0.9f, 0.8f, 0.2f)),
+            CreateTexturedMaterial("tex_building_hospital_clean", new Color(0.9f, 0.9f, 0.95f)),
+            CreateTexturedMaterial("tex_building_school_clean", new Color(0.7f, 0.5f, 0.3f)),
+            CreateTexturedMaterial("tex_building_cinema_clean", new Color(0.6f, 0.2f, 0.3f)),
+            CreateTexturedMaterial("tex_building_apartment_v2", new Color(0.6f, 0.45f, 0.35f)),
+            CreateTexturedMaterial("tex_building_office_clean", new Color(0.4f, 0.55f, 0.75f)),
+            CreateTexturedMaterial("tex_building_warehouse_clean", new Color(0.45f, 0.45f, 0.45f)),
+            CreateTexturedMaterial("tex_building_diner_clean", new Color(0.8f, 0.3f, 0.25f)),
+            CreateTexturedMaterial("tex_building_bookstore_clean", new Color(0.55f, 0.4f, 0.3f)),
+            CreateTexturedMaterial("tex_building_skyscraper_clean", new Color(0.4f, 0.6f, 0.8f)),
+            CreateTexturedMaterial("tex_building_brick_clean", new Color(0.6f, 0.4f, 0.3f)),
+            CreateTexturedMaterial("tex_building_hotel_clean", new Color(0.7f, 0.6f, 0.5f)),
             CreateTexturedMaterial("tex_building_apartment_clean", new Color(0.7f, 0.68f, 0.65f))
         };
 
@@ -479,9 +454,9 @@ public class SimpleTrackRunner : MonoBehaviour
             // Phase 14E: Sidewalks pushed further out (road is now 20 wide)
             sw.transform.localPosition = new Vector3(side * 12.5f, -0.3f, segmentLength / 2f);
             sw.transform.localScale = new Vector3(5f, 0.6f, segmentLength);
-            // Use dark material matching road color so curved world stretching is invisible
-            Material swEdgeMat = CreateTexturedMaterial("tex_sidewalk_wide", new Color(0.4f, 0.4f, 0.42f));
-            if (swEdgeMat.mainTexture == null) swEdgeMat = CreateTexturedMaterial("tex_sidewalk_stone", new Color(0.4f, 0.4f, 0.42f));
+            // Phase 15H: Use lighter concrete sidewalk texture (UV-safe PIL), fallback chain
+            Material swEdgeMat = CreateTexturedMaterial("tex_sidewalk_wide_clean", new Color(0.47f, 0.47f, 0.45f));
+            if (swEdgeMat.mainTexture == null) swEdgeMat = CreateTexturedMaterial("tex_sidewalk_light_concrete", new Color(0.47f, 0.47f, 0.45f));
             if (swEdgeMat.mainTexture == null) swEdgeMat = sidewalkMat;
             sw.GetComponent<Renderer>().material = swEdgeMat;
             Destroy(sw.GetComponent<Collider>());
@@ -658,7 +633,7 @@ public class SimpleTrackRunner : MonoBehaviour
                 GameObject lhead = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 lhead.transform.SetParent(lamp.transform);
                 lhead.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-                lhead.transform.localScale = new Vector3(3f, 1f, 3f);
+                lhead.transform.localScale = new Vector3(1.5f, 0.6f, 1.5f);
                 lhead.GetComponent<Renderer>().material = CreateColorMaterial(new Color(1f, 0.95f, 0.7f));
                 Destroy(lhead.GetComponent<Collider>());
             }
