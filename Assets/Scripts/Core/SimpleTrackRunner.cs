@@ -223,7 +223,7 @@ public class SimpleTrackRunner : MonoBehaviour
         if (grassMat.mainTexture == null) grassMat = CreateTexturedMaterialTiled("tex_ground_dark_fill", new Color(0.25f, 0.25f, 0.28f), 4f, 4f);
         if (grassMat.mainTexture == null) grassMat = CreateColorMaterial(new Color(0.2f, 0.3f, 0.2f));
         // Phase 15C: UV-safe gradient textures for obstacles (PIL-generated, clean on primitives)
-        barrierMat = CreateTexturedMaterial("tex_obstacle_barrier_clean", new Color(0.9f, 0.15f, 0.1f));
+        barrierMat = CreateTexturedMaterial("tex_obstacle_barrier_clean", new Color(0.95f, 0.55f, 0.1f)); // Phase 16D: orange-yellow instead of red
         trainMat = CreateTexturedMaterial("tex_obstacle_train_clean", new Color(0.3f, 0.35f, 0.7f));
         coneMat = CreateTexturedMaterial("tex_obstacle_cone_clean", new Color(1f, 0.5f, 0f));
         fenceMat = CreateColorMaterial(new Color(0.55f, 0.55f, 0.55f));
@@ -731,95 +731,31 @@ public class SimpleTrackRunner : MonoBehaviour
                 }
             }
 
-            // Trash cans
-            if (Random.value < 0.4f)
+            // Phase 16D: Moved all small props further out to sidewalk edge (side * 12f+) to avoid visual clutter on road
+            // Trash cans — pushed to sidewalk
+            if (Random.value < 0.3f)
             {
                 GameObject trashcan = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 trashcan.name = "TrashCan";
                 trashcan.transform.SetParent(segment.transform);
                 float tcZ = Random.Range(3f, segmentLength - 3f);
-                trashcan.transform.localPosition = new Vector3(side * 4.6f, 0.4f, tcZ);
-                trashcan.transform.localScale = new Vector3(0.35f, 0.4f, 0.35f);
+                trashcan.transform.localPosition = new Vector3(side * 12f, 0.4f, tcZ);
+                trashcan.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
                 trashcan.GetComponent<Renderer>().material = propMats[0];
                 Destroy(trashcan.GetComponent<Collider>());
             }
 
-            // Benches
-            if (Random.value < 0.25f)
+            // Benches — on sidewalk
+            if (Random.value < 0.2f)
             {
                 GameObject bench = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 bench.name = "Bench";
                 bench.transform.SetParent(segment.transform);
                 float bZ = Random.Range(5f, segmentLength - 5f);
-                bench.transform.localPosition = new Vector3(side * 4.7f, 0.3f, bZ);
-                bench.transform.localScale = new Vector3(0.4f, 0.35f, 1.2f);
+                bench.transform.localPosition = new Vector3(side * 11.5f, 0.3f, bZ);
+                bench.transform.localScale = new Vector3(0.5f, 0.4f, 1.4f);
                 bench.GetComponent<Renderer>().material = propMats[1];
                 Destroy(bench.GetComponent<Collider>());
-            }
-
-            // Mailboxes
-            if (Random.value < 0.15f)
-            {
-                GameObject mailbox = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                mailbox.name = "Mailbox";
-                mailbox.transform.SetParent(segment.transform);
-                float mbZ = Random.Range(5f, segmentLength - 5f);
-                mailbox.transform.localPosition = new Vector3(side * 4.5f, 0.55f, mbZ);
-                mailbox.transform.localScale = new Vector3(0.35f, 0.65f, 0.3f);
-                mailbox.GetComponent<Renderer>().material = propMats[2];
-                Destroy(mailbox.GetComponent<Collider>());
-            }
-
-            // Fire hydrants
-            if (Random.value < 0.2f)
-            {
-                GameObject hydrant = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                hydrant.name = "Hydrant";
-                hydrant.transform.SetParent(segment.transform);
-                float hyZ = Random.Range(3f, segmentLength - 3f);
-                hydrant.transform.localPosition = new Vector3(side * 4.4f, 0.25f, hyZ);
-                hydrant.transform.localScale = new Vector3(0.2f, 0.25f, 0.2f);
-                hydrant.GetComponent<Renderer>().material = propMats[3];
-                Destroy(hydrant.GetComponent<Collider>());
-            }
-
-            // Bollards
-            if (Random.value < 0.3f)
-            {
-                int bollardCount = Random.Range(2, 5);
-                float bollardStartZ = Random.Range(3f, segmentLength - 10f);
-                for (int bi = 0; bi < bollardCount; bi++)
-                {
-                    GameObject bollard = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    bollard.name = "Bollard";
-                    bollard.transform.SetParent(segment.transform);
-                    bollard.transform.localPosition = new Vector3(side * 4.3f, 0.35f, bollardStartZ + bi * 2f);
-                    bollard.transform.localScale = new Vector3(0.12f, 0.35f, 0.12f);
-                    bollard.GetComponent<Renderer>().material = propMats[5];
-                    Destroy(bollard.GetComponent<Collider>());
-                }
-            }
-
-            // Planters with flowers
-            if (Random.value < 0.2f)
-            {
-                GameObject planter = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                planter.name = "Planter";
-                planter.transform.SetParent(segment.transform);
-                float plZ = Random.Range(5f, segmentLength - 5f);
-                planter.transform.localPosition = new Vector3(side * 4.6f, 0.3f, plZ);
-                planter.transform.localScale = new Vector3(0.5f, 0.35f, 0.5f);
-                planter.GetComponent<Renderer>().material = propMats[6];
-                Destroy(planter.GetComponent<Collider>());
-
-                GameObject flowers = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                flowers.name = "Flowers";
-                flowers.transform.SetParent(planter.transform);
-                flowers.transform.localPosition = new Vector3(0f, 0.7f, 0f);
-                flowers.transform.localScale = new Vector3(0.8f, 0.5f, 0.8f);
-                Color flowerColor = new Color(Random.Range(0.6f, 1f), Random.Range(0.2f, 0.8f), Random.Range(0.2f, 0.6f));
-                flowers.GetComponent<Renderer>().material = CreateColorMaterial(flowerColor);
-                Destroy(flowers.GetComponent<Collider>());
             }
         }
 
@@ -835,17 +771,7 @@ public class SimpleTrackRunner : MonoBehaviour
             Destroy(grass.GetComponent<Collider>());
         }
 
-        // Phase 4: Curb/gutter detail between sidewalk and road
-        for (int side = -1; side <= 1; side += 2)
-        {
-            GameObject curb = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            curb.name = "Curb";
-            curb.transform.SetParent(segment.transform);
-            curb.transform.localPosition = new Vector3(side * 7.2f, -0.15f, segmentLength / 2f);
-            curb.transform.localScale = new Vector3(0.15f, 0.3f, segmentLength);
-            curb.GetComponent<Renderer>().material = CreateColorMaterial(new Color(0.3f, 0.3f, 0.32f));
-            Destroy(curb.GetComponent<Collider>());
-        }
+        // Phase 16D: Removed inner curb detail — was creating visible thin lines on road edge
 
         // Phase 16B: Overpasses removed — plain grey slabs looked too blocky and unpolished
 
